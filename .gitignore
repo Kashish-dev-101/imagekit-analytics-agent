@@ -2,9 +2,13 @@
 *.json
 outputs/
 
-# Test folder — local drafts only
-test/*.md
+# Test folder — local drafts only (keep README, ignore everything else)
+test/*
 !test/README.md
+
+# Version control folder — keep README, ignore archived content
+version-control/*
+!version-control/README.md
 
 # macOS
 .DS_Store
