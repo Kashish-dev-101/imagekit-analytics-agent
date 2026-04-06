@@ -1,5 +1,6 @@
-# Customer data — never commit raw analytics exports
+# Customer data — never commit raw analytics exports or example outputs
 *.json
+outputs/
 
 # Test folder — local drafts only
 test/*.md
