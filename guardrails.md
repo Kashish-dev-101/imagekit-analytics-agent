@@ -10,6 +10,7 @@
 Always reference official ImageKit documentation for any technical claim. If a behaviour isn't documented or you're not certain, flag it with ⚠️. Do not infer ImageKit behaviour from general CDN knowledge.
 
 Key docs:
+
 - [Image Optimization](https://imagekit.io/docs/image-optimization)
 - [Video Optimization](https://imagekit.io/docs/optimize-image-and-video-for-web-delivery)
 - [Video Transformation + First-time Request](https://imagekit.io/docs/video-transformation#first-time-request-and-cache)
@@ -27,22 +28,58 @@ Key docs:
 
 ## 3. Format Delivery
 
-- **WebP** — automatic, no account configuration needed. ImageKit converts to WebP by default for all supporting browsers.
-- **AVIF** — must be explicitly enabled in ImageKit account settings. Not on by default. When enabled + `f-auto` is in the URL, ImageKit serves AVIF to AVIF-capable browsers and WebP to others.
+- **WebP** — automatic when the auto format feature is enabled. ImageKit converts to WebP by default for all supporting browsers.
+- **AVIF** — not enabled by default. Must be requested and enabled by ImageKit on the account (it is not a self-serve dashboard toggle). When enabled + `f-auto` is in the URL, ImageKit serves AVIF to AVIF-capable browsers and WebP to others. If an account is serving strong WebP but zero AVIF, treat this as a recommendation opportunity — not a misconfiguration.
 - Always distinguish between the two in analysis. Never say "WebP/AVIF" as if they're the same setting.
+
+**How WebP/AVIF gets delivered — three paths:**
+
+WebP or AVIF in `formatWise` can come from any of these three mechanisms. From the analytics JSON alone you cannot tell which is active — all three produce the same result in the format breakdown:
+
+1. **Account-level setting enabled** — ImageKit automatically performs content negotiation for all requests, no URL param needed. If the browser sends `Accept: image/webp`, WebP is served. If the setting is off, this path is inactive.
+2. **`f-auto` in the URL** — same content negotiation behaviour as above, but controlled per-URL rather than account-wide. Works even if the account-level setting is off.
+3. **Hardcoded format param** — `f-webp`, `f-avif` in the URL forces that specific format for all clients, bypassing content negotiation entirely.
+
+**What this means for analysis:**
+- If `formatWise` shows WebP dominant → format optimisation is working. Do not investigate which path is responsible.
+- If `formatWise` shows significant JPEG/PNG despite WebP being expected → the issue is NOT a missing `f-auto`. Root cause is one of: (a) native app / bot traffic not sending `Accept` headers, or (b) a hardcoded `f-jpg` or `f-png` in the transform string actively blocking WebP.
+- **The only format flag to raise from transform strings is a hardcoded override: `f-jpg` or `f-png`.** These actively block WebP/AVIF delivery regardless of account settings or `f-auto`.
+- Do not flag absence of `f-auto` in a transform string as an issue — the account setting may be handling it.
 
 ---
 
-## 4. `f-auto` on Native Mobile Apps
+## 4. Native Mobile Apps — Images vs Videos
 
-`f-auto` and automatic WebP delivery via content negotiation works for browsers (which send `Accept: image/webp`). Native mobile app HTTP clients (OkHttp, URLSession) often do **not** send the correct Accept headers — they will receive the original format regardless of `f-auto`. For native apps, explicitly set `f-webp` in the URL.
+**Images:** Content negotiation uses the `Accept` header. Native mobile app clients (OkHttp, URLSession, Dart) often do not send `Accept: image/webp` — they receive the original format regardless of account settings or `f-auto`. Fix: explicitly set `f-webp` in the URL for native app image requests.
+
+**Videos:** Content negotiation uses the `User-Agent` header (`vary: User-Agent`), not the `Accept` header. Native mobile app clients often do not send a standard browser User-Agent — ImageKit cannot detect WebM support and falls back to the original format (typically MP4). Fix: explicitly force the output format in the video URL for native app clients.
+
+Never apply the image fix (`f-webp`) to video URLs or vice versa. The detection mechanism is different for each.
 
 > Reference: [Mobile App Optimizations](https://imagekit.io/docs/production-checklist#mobile-app-specific-optimizations)
 
 ---
 
+## 5. Video Format Delivery — How WebM Gets Served
+
+WebM delivery for videos works via `User-Agent` header inspection (`vary: User-Agent`), not via the `Accept` header used for images. This is the key difference between image and video format optimisation in ImageKit.
+
+**Three paths to WebM delivery (mirrors images):**
+1. **Account-level setting enabled** — ImageKit checks the User-Agent on every video request and serves WebM to supporting browsers automatically
+2. **`f-auto` in the video URL** — same User-Agent-based detection, controlled per-URL
+3. **Hardcoded format param** — `f-webm` forces WebM for all clients regardless of User-Agent
+
+**What this means for analysis:**
+- If `formatWise` shows WebM dominant for video → format optimisation is working ✅
+- If MP4 is the only video format → root cause is one of: (a) native app traffic with no standard User-Agent, or (b) a hardcoded format param blocking WebM
+- **The only format flag to raise from video transform strings is a hardcoded override that blocks WebM.** Absence of `f-auto` in a video URL is not a flag — account-level setting may be handling it.
+- `tr=orig` entries in video analytics are not a format issue — they are first-request intermediate responses (see Section 2)
+
+---
+
 ## 5. VPU Consumption
 
+- **VPU applies to video only — never to images.** Do not reference VPU in any image-related finding.
 - VPU are consumed **once per unique transformation, on first request only**. Subsequent requests serve from cache.
 - Each thumbnail generation = 30 VPU (equivalent to a 30-second SD video).
 - Multiple thumbnail sizes per video = multiple VPU charges.
@@ -67,6 +104,7 @@ For high-traffic accounts, dimensional breakdowns (format, country, device, brow
 ## 8. Flag Inferences Clearly
 
 Use ⚠️ for anything inferred from data patterns rather than confirmed. Common inferences that need customer confirmation:
+
 - Storage architecture (GCS, S3, external origin vs IK Media Library)
 - Whether `tr=orig` intermediate responses are occurring in their logs
 - What UI context specific thumbnail sizes serve

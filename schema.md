@@ -1,121 +1,130 @@
 # Analytics Agent — JSON Schema Guide
 
-> Which keys to read from the ImageKit analytics JSON export and what they reveal.
+> Field reference for ImageKit analytics JSON exports.
+> Three sections: (1) field-by-field reference, (2) UA classification rules, (3) thresholds and flag values.
 
 ---
 
-## Top-Level Keys
+## Section 1 — Field Reference
 
-| Key | What to Analyse |
-|-----|----------------|
-| `request.total` | Overall request volume for the period |
-| `request.dateWise` | Daily request trend — identify spikes, dips, growth pattern |
-| `request.pattern` | Requests by URL endpoint group — infer folder/product structure |
-| `bandwidth.total` | Total bandwidth for the period |
-| `bandwidth.dateWise` | Daily bandwidth trend |
-| `bandwidth.pattern` | Bandwidth by URL endpoint group — which product areas consume most |
-| `storage_bytes.total` | Total storage used in the media library |
-
----
-
-## Format & Delivery
-
-| Key | What to Analyse |
-|-----|----------------|
-| `formatWise` | Full format breakdown by requests and bandwidth — is WebP/AVIF in use? PNG/MP4 heavy? |
-| `statusCodeWise` | 200/206/304/404 rates — 206 indicates video streaming, 304 is browser cache hits |
-| `resultType` | Hit/Miss/Error/Redirect — CDN cache efficiency (note: may be truncated on high-traffic accounts) |
-| `savings` | Reported bandwidth savings from ImageKit optimisation |
-| `networkDistribution` | CDN vs origin split (may be empty on some exports) |
-
----
-
-## User Agents & Devices
-
-| Key | What to Analyse |
-|-----|----------------|
-| `browserDistribution` | Aggregated browser/client breakdown — Chrome, Safari, OkHttp, bots etc. |
-| `topUserAgent` | Raw UA strings — identify native app clients, AI agents, crawlers, SDK versions |
-| `deviceDistribution` | Granular device model breakdown |
-| `deviceTypeDistribution` | Smartphone / Desktop / Tablet / Unknown — calculate mobile % |
-
-**Signals to look for in UAs:**
-- `OkHttp` = Android native app
-- `URLSession` / `CFNetwork` = iOS native app
-- `Claude-User` / `anthropic` = AI agent fetching assets
-- `ai-sdk` / `Vercel` = AI orchestration layer
-- `python-requests` / `axios` / `node-fetch` = programmatic/server-side client
-- `Googlebot` / `bingbot` = search crawlers
+| JSON Key | Phase | What It Contains | What to Look For |
+|---|---|---|---|
+| `request.total` | 0, 1 | Total requests for the period | Baseline for all % calculations |
+| `bandwidth.total` | 1 | Total bandwidth in bytes | Convert to GB/TB for reporting |
+| `storage_bytes.total` | 1 | Storage used in the media library | Context for account size |
+| `request.dateWise.labels` | 1 | Array of date strings | Date axis for trend |
+| `request.dateWise.datasets[0].data` | 1 | Array of daily request counts | Spikes, dips, growth pattern |
+| `bandwidth.dateWise` | 1 | Same structure, daily bandwidth | Bandwidth trend (may differ from request trend if large asset days) |
+| `request.pattern` | 1 | Array of `{name, count}` — URL endpoint groups | Traffic distribution by product area / folder |
+| `bandwidth.pattern` | 1 | Same structure, bandwidth per group | Which areas consume most bandwidth |
+| `formatWise` | 0, 2 | Array of `{name, count, bandwidth}` — format breakdown | WebP %, AVIF presence, GIF presence |
+| `topImages.bandwidthWise` | 5 | Top 50 images by bandwidth | `{url, count, bandwidth}` — per-view size = bandwidth ÷ count |
+| `topImages.requestWise` | 5 | Top 50 images by request count | High-frequency assets |
+| `topVideos.bandwidthWise` | 5 | Top videos by bandwidth | Same fields — check transform for `f-auto`, `w-` |
+| `topVideos.requestWise` | 5 | Top videos by request count | |
+| `topOthers.bandwidthWise` | 5 | Non-image/video assets (JS, CSS, audio, PDF) | Look for unexpectedly large non-media assets |
+| `top404` | 5 | Top missing file paths | Group by pattern to identify root cause |
+| `browserDistribution` | 3 | Aggregated browser/client breakdown | Chrome, Safari, OkHttp, bots — aggregated categories |
+| `topUserAgent` | 3 | Raw UA strings with count and bandwidth | Most detailed source for classification — use this as primary |
+| `deviceDistribution` | 3 | Granular device model breakdown | Model-level detail |
+| `deviceTypeDistribution` | 0, 3 | Smartphone / Desktop / Tablet / Unknown | Use for mobile % and truncation check |
+| `topIps` | 4 | Array of `{name, count, bandwidth}` — top IPs | IP = client IP; high count = scraper or single server |
+| `referral.items` | 1 | Top referral domains with count and bandwidth | Where traffic originates; compare avg asset size per referrer |
+| `country.items` | — | Top 50 countries by requests and bandwidth | Single-market concentration, bandwidth-heavy countries |
+| `country.count` | — | Total requests attributed to countries | May be < total if data is truncated |
+| `transform.items` | 6 | Top image transformation strings | Count, bandwidth per transform string |
+| `videoTransform.items` | 6 | Top video transformation strings | Same structure |
+| `resultType` | 7 | Array of `{name, count}` — Hit / Miss / Error / RefreshHit | Cache hit rate = Hit / (Hit + Miss) |
+| `statusCodeWise` | 7 | Array of `{name, count}` — 200, 206, 304, 404, 400 | Status code mix |
+| `errorCodeWise` | 7 | Array of `{name, count}` — ENOENT, UNIDENTIFIED, etc. | Error pattern classification |
+| `networkDistribution` | — | CDN vs origin split | May be empty on some exports |
+| `savings` | — | Reported bandwidth savings | May be empty — not always configured |
+| `videoProcessingUnits` | 8 | Total VPU consumed + `dateWise` daily trend | Track first-time processing costs |
+| `extensionUnits` | 8 | Usage of paid extensions | Background removal, auto-tagging, AI description |
 
 ---
 
-## Geography
+## Section 2 — User Agent Classification Rules
 
-| Key | What to Analyse |
-|-----|----------------|
-| `country.items` | Top 50 countries by requests and bandwidth |
-| `country.count` | Total requests attributed to countries (may be < total due to truncation) |
+Use these patterns to classify every entry in `topUserAgent` into one of 5 categories.
+Match against the raw UA string. One entry can only belong to one category — use the first match.
 
-**Anomalies to flag:**
-- Country with low requests but disproportionately high bandwidth = large asset downloads
-- Single country representing > 80% of traffic = geo-concentration risk or single-market product
-- Unexpected country in top 5 = CDN routing issue or bot traffic origin
+### Web Browser
+Standard browser clients that send correct `Accept` headers for content negotiation.
+- `Mozilla/5.0` + `Chrome/` → Chrome (desktop or mobile)
+- `Mozilla/5.0` + `Safari/` (no Chrome) → Safari
+- `Mozilla/5.0` + `Firefox/` → Firefox
+- `Mozilla/5.0` + `Edg/` → Edge
+- `Mozilla/5.0` + `SamsungBrowser/` → Samsung Browser
 
----
+### Native Mobile App
+Clients that do NOT send `Accept: image/webp` — `f-auto` will not trigger WebP/AVIF delivery for these.
+- `Dart/` → Flutter (Dart HTTP client)
+- `okhttp/` → Android native (OkHttp)
+- `CFNetwork/` or `Darwin/` → iOS native (URLSession)
+- `com.apple.WebKit` with no browser UA → iOS WKWebView
 
-## Top Assets
+### In-App Browser
+Embedded browsers inside social apps — may have inconsistent Accept header behaviour.
+- `FBAN/` or `FBAV/` or `FB_IAB` → Facebook in-app
+- `Instagram` → Instagram in-app
+- `Twitter` or `X/` → Twitter/X in-app
+- `MicroMessenger` → WeChat in-app
 
-| Key | What to Analyse |
-|-----|----------------|
-| `topImages.bandwidthWise` | Top 50 images by bandwidth — are they resized? What format? |
-| `topImages.requestWise` | Top 50 images by request count — frequently-served assets |
-| `topVideos.bandwidthWise` | Top videos by bandwidth — are they using WebM? Is there a width cap? |
-| `topVideos.requestWise` | Most-served videos |
-| `topOthers.bandwidthWise` | Non-image/video assets (JS, CSS, fonts, PDFs etc.) |
-| `top404` | Most-requested missing files — broken references, CMS issues |
+### Bot / AI Agent
+Non-human clients — important for usage cost analysis and format recommendation scoping.
+- `Claude-User` or `anthropic-ai` → Anthropic AI agent fetching assets
+- `GPTBot` or `ChatGPT-User` or `OAI-SearchBot` → OpenAI crawler
+- `OpenAI-File-Downloader` → OpenAI file processing
+- `ai-sdk/` → Vercel AI SDK (orchestration layer)
+- `Googlebot` or `Bingbot` or `Slurp` → Search crawlers
+- `python-httpx` or `python-requests` → Python HTTP clients (usually backend/automation)
+- `Go-http-client` → Go HTTP client (usually backend)
+- `axios/` → JavaScript HTTP client (usually backend)
+- `node-fetch` or `node/` (no browser UA) → Node.js server-side
+- `curl/` → Direct curl calls
 
-**What to check on each top asset:**
-- Is a resize transformation applied? (`w-`, `h-`, `c-at_max` etc.)
-- Is format optimisation applied? (`f-auto`, `f-webp`, `f-avif`)
-- Is quality set? (`q-auto`, `q-80` etc.)
-- What is the bandwidth per view? (bandwidth ÷ views = avg file size per request)
-
----
-
-## Transformations
-
-| Key | What to Analyse |
-|-----|----------------|
-| `transform.items` | Top image transformation strings by count and bandwidth |
-| `videoTransform.items` | Top video transformation strings |
-
-**Signals to look for:**
-- Many unique transformation strings for the same asset = transformation sprawl, poor cache efficiency
-- No resize on high-bandwidth images = full-resolution delivery to all devices
-- `c-at_max` with no width = crop mode set but no size constraint
-- `e_loop` = looping video (often UGC hero content)
-
----
-
-## Other
-
-| Key | What to Analyse |
-|-----|----------------|
-| `referral.items` | Top referral sources — where is traffic coming from? |
-| `errorCodeWise` | Specific error codes — ENOENT = file not found in storage, other codes |
-| `videoProcessingUnits` | Total VPU consumed and daily trend |
-| `extensionUnits` | Usage of paid extensions (background removal, auto-tagging etc.) |
+### Server-side / Programmatic
+Backend application servers — include in request count but separate from user-facing traffic for recommendations.
+- `node` (bare) → Node.js server
+- Any of the above Bot patterns used by the customer's own backend (check referrer for confirmation)
 
 ---
 
-## Truncation Check
+## Section 3 — Thresholds and Flag Values
 
-Before drawing conclusions from any dimensional breakdown, verify:
+These are the specific numbers that trigger a flag. Apply consistently across all accounts.
 
-```
-sum(formatWise[].count) ≈ sum(deviceTypeDistribution[].count) ≈ request.total?
-```
+| Signal | Threshold | Flag level | Action |
+|---|---|---|---|
+| Single IP % of total requests | > 5% | ⚠️ | Flag as concentration risk — potential scraper or single app server |
+| Single IP avg bandwidth per request | > 1 MB | ⚠️ | Full-resolution downloads — check what transforms (if any) are applied |
+| Cache hit rate (Hit / Hit+Miss) | < 80% | ⚠️ | Check for unique transforms (Phase 6) or signed URL usage. ImageKit docs define ≥ 80% as optimal. |
+| Unique transformation strings | > 30 | ⚠️ | Transformation sprawl — poor CDN cache efficiency |
+| Near-duplicate transforms | width diff < 10px | ⚠️ | Consolidation opportunity |
+| Bot / AI Agent traffic | > 15% of requests | ⚠️ | Non-human traffic is significant — note for usage cost discussion |
+| In-App Browser traffic | > 10% of requests | ⚠️ | Check format delivery behaviour for these clients |
+| Native Mobile App detected | any | flag | `f-auto` won't work — explicit `f-webp` needed |
+| AVIF requests | = 0 | ⚠️ | AVIF not enabled in account settings |
+| GIF requests | > 0 | ⚠️ | Can be replaced with WebP or MP4 automatically |
+| Image bandwidth per view | > 2 MB | 🔴 | Oversized asset — check for missing resize |
+| Video bandwidth per view | > 10 MB | 🔴 | Unoptimised video — check for missing width cap and f-auto |
+| Daily request spike | > 2× daily average | ⚠️ | Note date — ask customer if expected (campaign, launch, bot event) |
+| 304 browser cache rate | < 1% | ⚠️ | Cache-Control headers may not be set correctly |
+| 404 rate | > 1% of total | ⚠️ | Broken references — group top404 by pattern |
+| Mobile % (browser + in-app + native) | > 30% | note in talking points | Provide mobile breakdown in Output 2 |
+| Web Browser % | > 60% | trigger | Recommend post-sales perf agent as next step |
 
-If all breakdowns sum to the same value but it's significantly less than `request.total`, the dimensional data is truncated. Flag this in the analysis — conclusions about format mix, device split, and country distribution will only reflect a subset of traffic.
+---
 
-The `request.pattern` breakdown is not affected by this truncation and will always sum to 100%.
+## Bandwidth Saving Estimates (for flagged opportunities)
+
+Use these conservative ranges when estimating potential savings. Always flag as ⚠️ estimate.
+
+| Optimization | Saving vs current | Notes |
+|---|---|---|
+| Enable AVIF (from WebP) | 20–30% of WebP bandwidth | Requires account settings change |
+| Enable WebM for video (from MP4) | 20–30% of MP4 bandwidth | Add `f-auto` to video URL |
+| Add resize to full-resolution image | 40–60% of current bandwidth | Depends on original vs display size ratio |
+| Add `f-webp` to native app requests | 20–35% of those requests | Depends on current format being served |
+| GIF → WebP | 30–50% of GIF bandwidth | Automatic with `f-auto` |
