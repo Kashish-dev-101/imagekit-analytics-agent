@@ -2,6 +2,9 @@
 *.json
 outputs/
 
+# Video prompt — kept local until merged into main prompt
+video-prompt.md
+
 # Test folder — local drafts only (keep README, ignore everything else)
 test/*
 !test/README.md
