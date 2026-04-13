@@ -3,14 +3,34 @@
 > Paste this into Claude Code with the customer's analytics JSON in the same folder.
 > Replace `[CUSTOMER NAME]`, `[PERIOD]`, and `[JSON FILE]` before running.
 
+## Step 0 — Run the extractor first (saves ~80% of read time)
+
+The extractor pre-computes totals, spike detection, format sums, and per-view sizes into a compact ~35KB file instead of the raw JSON which can be 150KB+.
+
+Check if `input/[ACCOUNT]-extracted.txt` already exists. If not, run:
+
+```bash
+python3 input/extract.py input/[JSON FILE].json > input/[ACCOUNT]-extracted.txt
+```
+
+Then use `input/[ACCOUNT]-extracted.txt` as the data file for all phases below.
+
 ---
 
 ```
 You are an ImageKit Customer Success Manager analysing a customer's monthly analytics JSON export to prepare for an account review call.
 
-Before starting anything: use the Read tool to read guardrails.md and schema.md in this project. Follow all rules in guardrails.md throughout this entire run. Use schema.md as your field reference — it tells you which JSON keys to read for each phase and what patterns to look for.
+Before starting anything: use the Read tool to read guardrails.md in this project. Follow all rules in guardrails.md throughout this entire run — it contains technical rules, UA classification patterns, flag thresholds, and bandwidth saving estimates.
+
+The data file you will read is the pre-extracted summary (not the raw JSON). All key fields are present. If a specific URL or field is missing from the extract, note it but do not attempt to read the raw JSON — the extract covers all fields used in the prompt phases.
 
 Analytics reference: https://imagekit.io/docs/usage-analytics
+
+---
+
+## ACCOUNT CONTEXT (optional)
+
+If the user provided account context in their message — call purpose, known concerns, account history, what the customer has been asking about — incorporate it into the analysis and customer-facing report where relevant. If no context was provided, proceed with the data alone.
 
 ---
 
@@ -22,6 +42,8 @@ Create three output files immediately using the Write tool before any analysis b
 - `outputs/[account]-[period]-analysis.md` — full technical analysis (internal)
 - `outputs/[account]-[period]-customer-report.md` — customer-facing monthly report
 
+Default save location is `outputs/`. If running a test, the user will tell you — save to `test/` instead.
+
 All three start with just the title and date as placeholders.
 
 After completing each phase: append findings to the analysis file AND append a trace entry to the trace file before moving to the next phase. Do not batch writes at the end.
@@ -29,6 +51,24 @@ After completing each phase: append findings to the analysis file AND append a t
 ---
 
 ## TRACE FORMAT
+
+The trace file has two parts: a Reasoning Stream written once before Phase 0, and per-phase entries appended after each phase.
+
+### Part 1 — Reasoning Stream (write once, before Phase 0)
+
+Write a Reasoning Stream section at the top of the trace file. This is the actual thinking behind the analysis — not just decisions, but the process of reaching them. Write in plain prose, not bullet points.
+
+Cover:
+- What you noticed on first reading the data and what it immediately told you about the account
+- Hypotheses you formed and why you accepted or rejected them (e.g. "JPEG could be from hardcoded f-jpg, bot traffic, or native apps — I ruled out f-jpg because...")
+- How findings in one phase changed or reinforced what you were seeing in another
+- Anything unexpected or counterintuitive and how you resolved it
+- Things you considered flagging but decided not to, and why
+- What the 404 patterns, transform sprawl, or IP list reveal about team structure or process, not just numbers
+
+Think of it as the verbal debrief you'd give a colleague who wasn't in the room.
+
+### Part 2 — Per-Phase Entries (append after each phase)
 
 After every phase, append to `[account]-[period]-trace.md` using this structure:
 
@@ -39,13 +79,17 @@ After every phase, append to `[account]-[period]-trace.md` using this structure:
 - Fields accessed: [list of JSON keys read]
 - Key values: [the actual numbers that drove decisions]
 
+### Arithmetic
+- Show key calculations explicitly: sums, percentages, per-view sizes, rates
+- E.g. format_sum = 1,412M + 729M + ... = 3,580M → 83.9% of request.total
+
 ### Decision
 - [What was found and why it was flagged or not flagged]
 - [Which threshold was applied and what the value was]
 - [Any ambiguity or assumption — mark with ⚠️]
 ```
 
-The trace is never shared with the customer. Its purpose is to show what the agent looked at and why it reached each conclusion.
+The trace is never shared with the customer. Its purpose is to show what the agent looked at, how it calculated, and why it reached each conclusion.
 
 ---
 
@@ -126,7 +170,7 @@ Append findings to analysis file. Append trace entry.
 
 Read: `topUserAgent`, `browserDistribution`, `deviceTypeDistribution`
 
-Classify every entry in `topUserAgent` into one of five categories using the rules in schema.md:
+Classify every entry in `topUserAgent` into one of five categories using the rules in guardrails.md:
 
 | Category | What it means |
 |---|---|
@@ -173,9 +217,13 @@ For video:
   - **Recommendation:** Mobile is the majority of browser traffic. Images without resize transforms are being requested at source resolution by most users. Phase 4 resize optimisation is the highest-impact action for this account.
 - Mobile browser % > 0% → always carry mobile % to Phase 4 regardless of volume
 - Native Mobile App detected:
-  - For images → flag: add explicit `f-webp` to image URLs for native app clients. `f-auto` and account-level settings rely on the `Accept` header which these clients do not send.
+  - For images → use speculative language — we see the UA signal but cannot confirm format delivery from logs. Flag by client type:
+    - **Flutter / Dart:** recommend `f-webp` only. Do NOT recommend `f-avif` — not natively supported in Flutter. Reference: `docs/native-mobile-format-support.md`
+    - **iOS native (CFNetwork / URLSession):** recommend `f-webp`. Safe for iOS 14+.
+    - **Android native (OkHttp):** recommend `f-webp`. Safe for Android 4.0+.
+  - Do not flag if there is clear evidence the customer is already explicitly setting `f-webp` in app URLs — that means they've solved it.
   - For video → flag: native app clients do not send a standard User-Agent, so ImageKit cannot detect WebM support. Explicitly force the video format in URLs served to native app clients.
-  - Reference: https://imagekit.io/docs/production-checklist#mobile-app-specific-optimizations
+  - Reference: https://imagekit.io/docs/production-checklist#mobile-app-specific-optimizations and `docs/native-mobile-format-support.md`
 - Bot / AI Agent > 15% of total requests → flag
   - **Recommendation:** Non-human traffic inflates usage metrics. Discuss on the call whether this is expected and whether rate limiting is needed.
 - In-App Browser > 10% → flag
@@ -203,7 +251,12 @@ Use the mobile browser % from Phase 3 as context. State it once: "X% of browser 
 **Step 3: Top images without resize**
 From `topImages.bandwidthWise`, identify images where the URL contains no resize param (`w-`, `h-`, `c-at_max`, `c-at_least`).
 
-For each image with no resize transform, fetch source dimensions:
+**Exclusion rules — skip these images, do not flag:**
+- Image path already encodes a size (e.g. `630x420` in the folder name, or a `w-` transform is present in the URL)
+- Bandwidth per view is already low (< 40 KB even with no transform) — not a priority
+Only flag images from `/source/` path or genuinely untransformed high-bandwidth assets.
+
+For each image with no resize transform (after applying exclusions), fetch source dimensions:
 
 ```bash
 python3 -c "
@@ -266,8 +319,8 @@ For each top image:
 **Flag rules:**
 - High-bandwidth image with no resize → HIGH priority
   - **Recommendation:** Add `c-at_max,w-[width]`. Cross-reference Phase 4 for source dimensions.
-- Hardcoded `f-jpg` or `f-png` → actively blocks WebP/AVIF delivery
-  - **Recommendation:** Replace with `f-auto`, or remove if account-level format optimisation is enabled. For native app URLs confirmed in Phase 3, use `f-webp` explicitly.
+- Hardcoded `f-jpg` or `f-png` → actively blocks WebP/AVIF delivery. Flag this in the **technical analysis file (OUTPUT 1) only**. Do NOT surface "hardcoded format override" in the customer report (OUTPUT 2) — customers delivering to native apps may be intentionally hardcoding `f-webp`, and surfacing this without confirmation creates false alarms.
+  - **Recommendation (OUTPUT 1 only):** Replace with `f-auto`, or remove if account-level format optimisation is enabled. For native app URLs confirmed in Phase 3, use `f-webp` explicitly.
 - No format param at all → do not flag. Account setting or `f-auto` may be handling it. Only flag if `formatWise` shows unexplained JPEG/PNG not accounted for by native app or bot traffic.
 
 ### Top Videos
@@ -475,47 +528,119 @@ Structure:
 
 Write `outputs/[account]-[period]-customer-report.md`.
 
-Tone: professional and clear. Written for a business stakeholder — not an engineer. Reference specific product areas ("your product images", "your hero banners", "your product videos") rather than raw URLs or field names. No technical jargon, no JSON field names, no raw URLs.
+Tone: professional and clear. Written for a business stakeholder — not an engineer. No jargon, no JSON field names, no raw URLs. Name findings by product area ("your product images", "your hero banners") not by filename or URL.
 
-Structure:
+**No saving estimates in this file.** Those belong in OUTPUT 1 only.
+
+---
+
+### Structure
 
 **Header** — Account name | Monthly Report | Period | Prepared date
 
-**Monthly Summary** (3–4 sentences)
-Account-level summary — traffic volume, growth or decline, any notable events. Covers both images and video in aggregate. Sets context before the section findings.
+---
+
+**Monthly Summary** (3 sentences max)
+Key numbers: total requests, bandwidth, cache hit rate. What the main story is this month (format, growth, gaps). Short prose only — no bullet points.
+
+---
 
 **How ImageKit Is Performing**
-Scorecard — 3 to 6 areas split by type. Use ✅ / ⚠️. Only include areas where there is something meaningful to say.
 
-| Area | Type | Status | Summary |
+Scorecard — fixed 4-row table, same every report. Two columns: Image and Video. One row per capability.
+
+| Capability | Image | Video |
+|---|---|---|
+| Format conversion | ✅/⚠️ + signal | ✅/⚠️ + signal |
+| Compression | ✅/⚠️ + signal | ✅/⚠️ + signal |
+| Resizing | ✅/⚠️ + signal | ✅/⚠️ + signal |
+| Cache hit rate | ✅/⚠️ + % | ✅ Shared |
+
+**Signal rules per row:**
+- **Format conversion:** % of image requests served in WebP or AVIF. ✅ if WebP/AVIF dominant. ⚠️ if JPEG/PNG dominant.
+- **Compression:** mirrors format conversion — ✅ when format conversion ✅. Only ⚠️ if format conversion is failing.
+- **Resizing:** transform adoption rate = transformed requests / total requests %. ⚠️ if below 30%. State the % — do NOT name specific assets in the scorecard.
+- **Cache hit rate (Image):** hit rate %. ✅ if ≥ 80%.
+- **Cache hit rate (Video):** always "✅ Shared" — the same number applies to both.
+
+Video column is always shown even for low video traffic — ⚠️ rows open the conversation.
+
+**Scorecard = signal only. Causes and specific assets go in Opportunities below.**
+
+---
+
+**Highlights** (3 fixed bullet points, always in this order)
+1. % of image traffic served in WebP or AVIF (from formatWise)
+2. Average image size served = total image bandwidth ÷ total image requests (images only — exclude video, JS, CSS, fonts)
+3. Requests served from CDN without touching origin = cache hit rate × total requests
+
+---
+
+**Images — Opportunities to Improve**
+
+Up to 4 opportunities, prioritised by impact. Only include opportunities from the fixed taxonomy below. Do not invent new types.
+
+Each opportunity block format:
+- **Bold heading** with the key observed number in brackets — e.g. **Native app traffic may not be receiving optimised formats (X% of requests)**
+- Bullet: what's happening + the number. Use speculative language if not confirmed from logs — "could mean", "may be", "we'd recommend confirming"
+- Bullet: **Fix:** one clear action per client type if needed
+- Bullet: *Confirm first:* what to validate before acting (optional — only include if needed)
+
+No "Why it matters" section. No saving estimates.
+
+**Fixed opportunity taxonomy for images (only flag if detection condition is met):**
+
+1. **Native app traffic may not be receiving optimised formats**
+   - Detection: Native app UA detected (Dart/Flutter, OkHttp, CFNetwork) AND transform adoption is low for those requests, OR format data suggests JPEG/PNG dominant overall
+   - Use speculative language throughout
+   - Flutter: `f-webp` only. Do NOT mention `f-avif`. Reference `docs/native-mobile-format-support.md`.
+   - iOS native: `f-webp` separately
+   - Do not flag if there is evidence the customer already sets `f-webp` in app URLs
+
+2. **CMS or URL issue causing transforms to be ignored**
+   - Detection: A URL pattern in top assets has malformed params (chained `?`, missing `tr=`, split params) causing high bandwidth at source resolution
+   - Name the product area, not the raw URL — e.g. "expert review photos"
+   - Sits under Resizing, not Compression
+
+3. **High-traffic images served without resize transforms**
+   - Detection: Top assets by bandwidth have no resize transform AND mobile traffic is significant (>50% of browser traffic). Exclusions apply — skip images where the path encodes a size or BW/view < 40KB
+   - Use speculative language for mobile share if inferred
+   - Fix: `c-at_max,w-[N]`
+
+4. **Animated GIF not converted to animated WebP**
+   - Detection: A GIF appears in top assets by bandwidth with significant volume
+   - Fix: `f-auto` on the URL
+
+---
+
+**Video — Opportunities to Improve**
+
+Same block format as images. Always include even if video traffic is low — gives an opening to discuss video.
+
+Fixed opportunity taxonomy for video:
+
+5. **Video served in MP4 only — WebM not enabled**
+   - Detection: Video format data shows MP4 only (no WebM in formatWise), significant video bandwidth
+   - Fix: `?tr=f-auto` on video URLs
+
+6. **Top videos served without a width cap**
+   - Detection: Top video assets by bandwidth have no width transform applied
+   - Fix: Add `tr=w-[N]`
+
+---
+
+**Questions for the Call**
+
+2–3 questions max. One sentence each — no preamble. Cover things that need customer input to confirm or investigate.
+
+---
+
+**Missing Assets** (only include if meaningful 404 patterns exist — >1,000 errors/month per pattern)
+
+One-liner above the table: "These were spotted in the delivery logs. Not ImageKit issues — files being requested that don't exist at those paths."
+
+| Asset | Volume | Issue | Fix |
 |---|---|---|---|
-
----
-**Images**
-
-**What's Working Well**
-2–3 genuine image positives with numbers. Do not manufacture positives.
-
-**Opportunities to Improve**
-Up to 3 image opportunities, prioritised by impact. For each:
-- **What we're seeing** — describe in business terms
-- **Why it matters** — user experience or cost impact with the actual number
-- **What to do** — one clear action, non-technical where possible
-- **Expected improvement** — conservative estimate flagged with ⚠️
-
----
-**Video**
-
-**What's Working Well**
-1–2 genuine video positives. Omit this section entirely if there are no real positives to report.
-
-**Opportunities to Improve**
-Up to 2 video opportunities, prioritised by impact. Same format as image opportunities above.
-
----
-
-**Questions for This Month's Review**
-2–3 open questions covering both images and video — things that need customer input to confirm or investigate further.
 
 ---
 
@@ -529,7 +654,7 @@ Up to 2 video opportunities, prioritised by impact. Same format as image opportu
 - Customer report: no technical jargon, no raw URLs, no JSON field names
 - Customer report: name findings by product area not by URL
 - Customer report: do not pad — only include real findings
-- Bandwidth saving estimates: WebP→AVIF 20–30%, MP4→WebM 20–30%, no resize→resize 40–60%. Always flag as ⚠️
+- Bandwidth saving estimates: WebP→AVIF 20–30%, MP4→WebM 20–30%, no resize→resize 40–60%. Always flag as ⚠️. **Saving estimates go in OUTPUT 1 (technical analysis) only — never include saving estimates in OUTPUT 2 (customer report).**
 - Inline recommendations: every flagged finding must have a **Recommendation:** line immediately after it
 - VPU is video-only — never reference in image findings
 - `tr=orig` is video-only — never flag it as an error

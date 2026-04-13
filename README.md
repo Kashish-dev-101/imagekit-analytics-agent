@@ -1,48 +1,150 @@
 # ImageKit Analytics Agent
 
-A reusable Claude Code agent for analysing ImageKit monthly analytics JSON exports. Takes raw account data and produces a full technical analysis + customer-facing talking points.
+A Claude Code agent for analysing ImageKit monthly analytics JSON exports. Drop in a customer's data, ask Claude to run the analysis, and get a full technical analysis plus a customer-facing report ready for the account review call.
 
 ---
 
-## What It Does
+## What It Produces
 
-Given a customer's ImageKit analytics JSON, the agent produces:
+For each customer, the agent creates three files:
 
-1. **Quick account summary** — who the customer is, traffic volume, bandwidth, daily trends
-2. **Format delivery analysis** — WebP/AVIF coverage, video WebM, optimization gaps
-3. **UA & device breakdown** — browser mix, mobile %, native app clients, bots, AI agents
-4. **Geography** — top countries by requests and bandwidth, anomalies
-5. **Top assets** — highest bandwidth and highest frequency images and videos
-6. **Optimization opportunities** — data-backed, referenced against ImageKit docs
-7. **Customer talking points** — non-technical summary for calls and account reviews
+| File | Audience | Purpose |
+|------|----------|---------|
+| `[account]-[period]-analysis.md` | Internal | Full technical findings — every phase, every flag, all numbers |
+| `[account]-[period]-trace.md` | Internal | Reasoning log — what was read, how calculations were done, why things were flagged |
+| `[account]-[period]-customer-report.md` | Customer-facing | Non-technical summary for the account review call — what's working, what to fix, questions for the call |
+
+---
+
+## Operating Modes
+
+Default to **CSM Mode** for normal customer work.
+
+- In `CSM Mode`, use `input/` and `outputs/` only. Run analyses, generate outputs, and edit existing customer report files when needed.
+- `test/` is for prompt-development and agent-maintenance work only.
+- Only switch to **Prompt Maintainer Mode** when prompt-development work is explicitly requested and editing `prompt.md`, `guardrails.md`, repo instruction files, or prompt-iteration files in `test/` is intentionally authorized.
+
+See `AGENTS.md` for the full role and file-editing policy.
 
 ---
 
 ## How to Use
 
-1. Drop the customer's analytics JSON into a working folder
-2. Open Claude Code in that folder
-3. Paste the prompt from `prompt.md` into the chat
-4. Attach or reference the JSON file
-5. Claude will produce a full analysis + talking points
+### 1. Add the customer's JSON
+
+Drop the analytics JSON export from the ImageKit dashboard into the `input/` folder.
+
+```
+input/girnar.json
+```
+
+### 2. Open Claude Code in this project folder
+
+```bash
+cd "ImageKit Analytics Agent"
+claude
+```
+
+### 3. Tell Claude to run the analysis
+
+In the chat, say something like:
+
+> "Run the analysis for Girnar — the JSON is `input/girnar.json`, period is March 2026."
+
+You can also add account context in the same message — anything that should shape the findings or report tone:
+
+> "Run the analysis for Girnar — JSON is `input/girnar.json`, March 2026. This is a renewal call and they've been asking about bandwidth costs."
+
+Claude handles everything from there: running the extractor, reading the prompt, working through all analysis phases, and saving the three output files to `outputs/`.
+
+### 4. Review the outputs
+
+All three files land in `outputs/`:
+
+```
+outputs/girnar-march-2026-analysis.md
+outputs/girnar-march-2026-trace.md
+outputs/girnar-march-2026-customer-report.md
+```
+
+The **customer report** is what you bring to the call. The **analysis** and **trace** are reference — use them if you need to go deeper on a finding or verify a number.
+
+### For prompt-development test runs
+
+If you're explicitly doing prompt-development work, tell Claude to save to `test/` instead:
+
+> "Run the analysis for Girnar — JSON is `input/girnar.json`, March 2026. Save to `test/` — this is a test run."
 
 ---
 
-## Files
+## Folder Structure
 
-| File | Purpose |
-|------|---------|
-| `prompt.md` | Main analysis prompt — paste this into Claude |
-| `guardrails.md` | Technical rules Claude must follow when analysing ImageKit data |
-| `schema.md` | JSON field guide — what each key reveals and what to look for |
-| `outputs/` | Example outputs from real account analyses |
+```
+README.md               This file
+prompt.md               Main analysis prompt — Claude reads this when running an analysis
+guardrails.md           Technical rules, UA classification patterns, flag thresholds, saving estimates
+docs/                   Reference docs for customer-facing recommendations (tracked)
+input/                  Drop customer JSONs here (gitignored — safe for customer data)
+  └── README.md         Instructions for this folder
+  └── extract.py        Pre-processor — compresses raw JSON into a compact summary file
+  └── extract.js        JS version of the extractor
+  └── [account].json    Raw analytics export (local only)
+  └── [account]-extracted.txt    Pre-processed summary (generated by extractor, local only)
+
+outputs/                Completed analyses (gitignored — customer data)
+  └── examples/         Reference outputs from earlier analyses (older single-file format)
+
+test/                   For testing the agent — prompt iterations, experimental runs (gitignored)
+  └── README.md         Instructions for this folder
+
+version-control/        Archived older prompt versions (gitignored — local only)
+  └── README.md         Index of archived versions
+```
+
+**What's gitignored:**
+- `input/` — all customer JSONs and extracted files (README tracked)
+- `outputs/` — all customer analyses (examples/ subfolder is tracked as reference)
+- `test/` — all test drafts (README tracked)
+- `version-control/` — all archived prompts (README tracked)
 
 ---
 
-## Example Outputs
+## How the Agent Works
 
-| Account | Period | Files |
+The agent follows a structured 8-phase analysis process, all defined in `prompt.md`:
+
+| Phase | What it does |
+|-------|-------------|
+| 0 — Data Integrity | Checks whether dimensional breakdowns are complete or truncated (known platform bug) |
+| 1 — Traffic Summary | Requests, bandwidth, daily trend, URL patterns, top countries, top referrers |
+| 2 — Format Delivery | What formats ImageKit served — WebP, AVIF, JPEG, WebM, MP4 — and what's missing |
+| 3 — Traffic Sources | Classifies all traffic: web browser, native app, bot, in-app browser, server-side |
+| 4 — Resize Coverage | How widely transforms are used, which high-traffic assets have no resize applied |
+| 5 — Top Assets | Deep dive on highest-bandwidth images and videos — per-view size, format, transform |
+| 6 — Transform Analysis | Transform sprawl, near-duplicate widths, malformed strings, cache hit rate |
+| 7 — Top IPs | Who is making the most requests — app servers, bots, scrapers, CDN nodes |
+| 8 — VPU Consumption | Video processing unit usage, thumbnail costs, first-request processing spikes |
+
+After all phases, Claude writes the two internal files and then the customer-facing report.
+
+---
+
+## Key Rules (summary — see `guardrails.md` for full detail)
+
+- **Truncation check first** — high-traffic accounts often have dimensional data capping at 10–15% of total. Always verify before drawing format or device conclusions.
+- **WebP ≠ AVIF** — WebP is automatic. AVIF must be enabled by ImageKit on the account. Never treat them as the same.
+- **Native apps don't get format optimisation automatically** — Dart/Flutter and iOS apps don't send `Accept` headers. They need explicit `f-webp` in image URLs.
+- **`tr=orig` is not an error** — it's an intermediate response for first-time uncached video transformations.
+- **VPU is video-only** — never reference VPU in image findings.
+
+---
+
+## Reference Examples
+
+Older single-file analyses in `outputs/examples/` — produced before the 3-file structure, still useful as content references:
+
+| Account | Period | Notes |
 |---------|--------|-------|
-| Vax | March 2026 | `outputs/vax-march-2026.md` |
-| Morphic | March 2026 | `outputs/morphic-march-2026.md` |
-| Popopo | March 2026 | `outputs/popopo-march-2026.md` |
+| Vax | March 2026 | High-traffic e-commerce, Cloudinary URL rewriter, strong WebP, UGC video gaps |
+| Morphic | March 2026 | AI-generated content platform, Claude-User in top traffic sources, PNG optimisation gap |
+| Popopo | March 2026 | `outputs/examples/popopo-march-2026.md` |

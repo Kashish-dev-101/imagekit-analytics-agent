@@ -1,13 +1,16 @@
-# Customer data — never commit raw analytics exports or example outputs
+# Customer data — never commit raw analytics exports
 *.json
+
+# Input folder — ignore customer data files, keep scripts and README
+input/*-extracted.txt
+
+# Outputs folder — ignore everything, no customer data should be committed
 outputs/
 
-# Video prompt — kept local until merged into main prompt
-video-prompt.md
-
-# Test folder — local drafts only (keep README, ignore everything else)
+# Test folder — keep README and video-prompt, ignore everything else
 test/*
 !test/README.md
+!test/video-prompt.md
 
 # Version control folder — keep README, ignore archived content
 version-control/*
