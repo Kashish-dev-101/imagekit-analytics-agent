@@ -1,20 +1,19 @@
 # Customer data — never commit raw analytics exports
 *.json
 
-# Input folder — ignore customer data files, keep scripts and README
+# Input folder — ignore customer data, keep scripts and README
+input/*.json
 input/*-extracted.txt
 
-# Outputs folder — ignore everything, no customer data should be committed
-outputs/
+# Outputs folder — ignore all content, keep the folder itself
+outputs/*
+!outputs/.gitkeep
 
-# Test folder — keep README and video-prompt, ignore everything else
-test/*
-!test/README.md
-!test/video-prompt.md
+# Test folder — local only, not needed for agent to work
+test/
 
-# Version control folder — keep README, ignore archived content
-version-control/*
-!version-control/README.md
+# Version control folder — local only, not needed for agent to work
+version-control/
 
 # macOS
 .DS_Store
