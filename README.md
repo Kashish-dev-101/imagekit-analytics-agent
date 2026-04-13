@@ -28,6 +28,12 @@ See `AGENTS.md` for the full role and file-editing policy.
 
 ---
 
+## Getting Started
+
+First time? Follow **[setup/installation.md](./setup/installation.md)** to install Node.js, VS Code, Claude Code, and Python. Takes about 10 minutes and only needs to be done once.
+
+---
+
 ## How to Use
 
 ### 1. Add the customer's JSON
