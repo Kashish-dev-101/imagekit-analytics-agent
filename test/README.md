@@ -1,15 +1,11 @@
 # test/
 
-Working space for running and iterating on the analytics prompt.
+For testing the agent itself — prompt iterations, guardrails testing, and experimental runs.
 
-Files here are local-only (gitignored) — treat everything in this folder as a draft.
+Files here are local-only (gitignored).
+
+**Customer data (JSONs, extracted files, analysis outputs) belongs in `input/` and `outputs/` — not here.**
 
 ## Usage
 
-Drop a customer analytics JSON here, run the prompt against it, and save the raw output. Once an output is polished and worth keeping as a reference example, move it to `outputs/`.
-
-## Naming convention
-
-`[account]-[period]-[date].md`
-
-Example: `vax-march-2026-04-06.md`
+Use this folder when you want to try a prompt change or test a specific phase without touching real customer outputs. Tell Claude to save to `test/` instead of `outputs/` for these runs.
