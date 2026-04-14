@@ -1,7 +1,7 @@
 # Analytics Agent — Full Prompt (Images + Video)
 
-> Paste this into Claude Code with the customer's analytics JSON in the same folder.
-> Replace `[CUSTOMER NAME]`, `[PERIOD]`, and `[JSON FILE]` before running.
+> Claude reads this file automatically when you open the project folder.
+> To run: drop the customer JSON in `input/`, then tell Claude — *"Run the analysis for [account] — the JSON is `input/[filename].json`, period is [month year]."*
 
 ## Step 0 — Run the extractor first (saves ~80% of read time)
 
