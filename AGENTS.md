@@ -9,15 +9,15 @@ Designed to coexist with `CLAUDE.md` — both files should remain aligned in int
 
 Default to **CSM Mode**.
 
-Only switch to **Prompt Maintainer Mode** when the user explicitly asks for prompt-development work or explicitly authorizes editing prompt-maintenance files such as `prompt.md`, `guardrails.md`, `AGENTS.md`, `CLAUDE.md`, or prompt-iteration files in `test/`.
+Only switch to **Prompt Maintainer Mode** when the user explicitly asks for prompt-development work or explicitly authorizes editing prompt-maintenance files such as `prompt.md`, `guardrails.md`, `AGENTS.md`, `CLAUDE.md`, or prompt-iteration files in `archive/test/`.
 
 ### CSM Mode
 
 This is the default mode for normal customer work.
 
 Allowed:
-- Run analyses from `input/`
-- Write new outputs to `outputs/`
+- Run analyses from `data/input/`
+- Write new outputs to `data/output/`
 - Edit an existing `[account]-customer-report.md` only
 
 Not allowed unless the user explicitly switches to Prompt Maintainer Mode:
@@ -25,8 +25,8 @@ Not allowed unless the user explicitly switches to Prompt Maintainer Mode:
 - Edit `guardrails.md`
 - Edit `AGENTS.md`
 - Edit `CLAUDE.md`
-- Edit prompt-iteration notes or drafts in `test/`
-- Create new prompt-work files in `test/`
+- Edit prompt-iteration notes or drafts in `archive/test/`
+- Create new prompt-work files in `archive/test/`
 
 ### Prompt Maintainer Mode
 
@@ -35,7 +35,7 @@ Use this mode only for prompt-development and repo-maintenance work explicitly r
 Allowed:
 - Edit `prompt.md`, `guardrails.md`, `AGENTS.md`, `CLAUDE.md`
 - Update `test/customer-report-prompt-notes.md`
-- Create or revise prompt-development drafts in `test/`
+- Create or revise prompt-development drafts in `archive/test/`
 - Update handoff context for the next agent/session
 
 ---
@@ -72,16 +72,20 @@ Core project files:
 ## Folder Structure
 
 ```
-prompt.md           Main analysis prompt
-guardrails.md       Technical rules, UA classification, thresholds, saving estimates
-docs/               Reference docs for customer-facing recommendations (tracked)
-input/              Customer JSON exports and extracted files (gitignored — local only)
-  └── extract.py    Pre-processor — compresses raw JSON into a compact summary
-  └── extract.js    JS version of the extractor
-outputs/            Completed analyses (gitignored — customer data)
-  └── examples/     Reference outputs — older single-file format (tracked)
-test/               For testing the agent itself (gitignored — local only)
-version-control/    Archived prompt versions (gitignored — local only)
+agent/
+  prompt.md             Main analysis prompt — Claude reads this when running an analysis
+  extract.py            Pre-processor — compresses raw JSON into a compact summary
+  docs/                 Reference docs for customer-facing recommendations (tracked)
+.claude/
+  rules/guardrails.md   Technical rules, UA classification patterns, thresholds, saving estimates
+  skills/               Analytics skills (preflight, run, quickcheck, compare, report-edit)
+data/                   Runtime data (gitignored — customer data stays local)
+  input/                Customer JSON exports
+  extracted/            Generated compact summaries (produced by extract.py)
+  output/               Working output location during runs
+reference-outputs/      Example analyses — older single-file format (gitignored, local only)
+archive/                Old prompt versions, retired scripts
+  test/                 Prompt-development test runs (gitignored)
 ```
 
 ---
@@ -90,16 +94,16 @@ version-control/    Archived prompt versions (gitignored — local only)
 
 When the user asks to run an analysis:
 
-1. **Check for an existing extracted file** — look for `input/[account]-extracted.txt`. If it exists, use it. If not, run the extractor first:
+1. **Check for an existing extracted file** — look for `data/extracted/[account]-extracted.txt`. If it exists, use it. If not, run the extractor first:
    ```bash
-   python3 input/extract.py input/[filename].json > input/[account]-extracted.txt
+   python3 agent/extract.py data/input/[filename].json > data/extracted/[account]-extracted.txt
    ```
 2. **Read `guardrails.md`** — follow all rules throughout the entire run.
 3. **Read `prompt.md`** — follow it exactly, phase by phase.
 4. **Incorporate any account context** the user provided in their message — weave it into the analysis and customer report where relevant.
-5. **Save all three output files to `outputs/`**.
+5. **Save all three output files to `data/output/`**.
 
-Only save to `test/` when the user has explicitly switched to Prompt Maintainer Mode and asked for a prompt test run.
+Only save to `archive/test/` when the user has explicitly switched to Prompt Maintainer Mode and asked for a prompt test run.
 
 ---
 
@@ -113,8 +117,8 @@ Only save to `test/` when the user has explicitly switched to Prompt Maintainer 
 | Trace | `girnar-march-2026-trace.md` |
 | Customer report | `girnar-march-2026-customer-report.md` |
 
-All outputs go to `outputs/`.
-Only use `test/` for explicit Prompt Maintainer Mode test runs.
+All outputs go to `data/output/`.
+Only use `archive/test/` for explicit Prompt Maintainer Mode test runs.
 
 ---
 
@@ -145,9 +149,9 @@ Full detail in `guardrails.md`. Critical rules to apply from the start:
 ## Data and Safety Rules
 
 - Treat customer analytics exports as sensitive — never log, expose, or commit them.
-- Customer JSONs and extracted files belong in `input/` (gitignored).
-- Completed analyses belong in `outputs/` (gitignored).
-- `test/` is for prompt-development and agent-maintenance work only, not normal CSM/customer operations.
+- Customer JSONs and extracted files belong in `data/input/` (gitignored).
+- Completed analyses belong in `data/output/` (gitignored).
+- `archive/test/` is for prompt-development and agent-maintenance work only, not normal CSM/customer operations.
 
 ---
 
@@ -157,3 +161,7 @@ Full detail in `guardrails.md`. Critical rules to apply from the start:
 - By default, only edit files the user has asked about.
 - If unsure, create new output files rather than altering existing baseline docs.
 - Never delete analysis artifacts unless explicitly asked.
+
+## Gists
+
+Always create gists as **secret**. Never use `--public`. Default (`gh gist create` with no flag) = secret. Only use `--public` if the user explicitly asks.

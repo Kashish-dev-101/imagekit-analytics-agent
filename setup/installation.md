@@ -80,19 +80,37 @@ Run `claude` in your terminal — it will open a browser window to authenticate 
 
 ---
 
-## Step 5 — Check Python 3
+## Step 5 — Set up Python 3 and dependencies
 
-The data extractor (`input/extract.py`) requires Python 3. Check if it's installed:
+The data extractor (`agent/extract.py`) requires Python 3 and one library. Do both:
+
+**Check Python 3:**
 
 ```bash
 python3 --version
 ```
 
-macOS ships with Python 3 — if the command returns a version, you're good. If not, install it via Homebrew:
+macOS ships with Python 3 — if the command returns a version, you're good. If not, install via Homebrew:
 
 ```bash
 brew install python3
 ```
+
+**Install the required library:**
+
+```bash
+pip3 install -r requirements.txt
+```
+
+This installs `device-detector`, which the extractor uses to classify User-Agent strings (browser, native app, bot, etc.) before analysis.
+
+Verify it installed:
+
+```bash
+python3 -c "from device_detector import DeviceDetector; print('OK')"
+```
+
+You should see `OK`. If you see an error, re-run `pip3 install -r requirements.txt`.
 
 ---
 
