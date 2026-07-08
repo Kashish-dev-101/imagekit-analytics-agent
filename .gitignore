@@ -1,13 +1,24 @@
-# Customer analytics data — never commit
-data/
+# Customer analytics data — never commit actual data, only the folder structure
+data/*
+!data/input/
+!data/extracted/
+!data/output/
+data/input/*
+!data/input/README.md
+data/extracted/*
+!data/extracted/.gitkeep
+data/output/*
+!data/output/.gitkeep
 
 # Customer analyses — real account data
 reference-outputs/
 
-# Build-time and internal-only
-archive/
+# Build-time and internal-only — keep the README, ignore everything else
+archive/*
+!archive/README.md
 status.md
 restructure-log.md
+removed-sections.md
 
 # Local Claude Code settings (machine-specific)
 .claude/settings.local.json
