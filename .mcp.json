@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "imagekit_devtools": {
+      "type": "http",
+      "url": "https://devtools-mcp.imagekit.io/mcp"
+    }
+  }
+}

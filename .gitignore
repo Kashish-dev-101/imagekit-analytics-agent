@@ -1,19 +1,16 @@
-# Customer data — never commit raw analytics exports
-*.json
+# Customer analytics data — never commit
+data/
 
-# Input folder — ignore customer data, keep scripts and README
-input/*.json
-input/*-extracted.txt
+# Customer analyses — real account data
+reference-outputs/
 
-# Outputs folder — ignore all content, keep the folder itself
-outputs/*
-!outputs/.gitkeep
+# Build-time and internal-only
+archive/
+status.md
+restructure-log.md
 
-# Test folder — local only, not needed for agent to work
-test/
-
-# Version control folder — local only, not needed for agent to work
-version-control/
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
 
 # macOS
 .DS_Store

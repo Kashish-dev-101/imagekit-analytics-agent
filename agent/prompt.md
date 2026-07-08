@@ -1,26 +1,26 @@
 # Analytics Agent — Full Prompt (Images + Video)
 
-> Claude reads this file automatically when you open the project folder.
-> To run: drop the customer JSON in `input/`, then tell Claude — *"Run the analysis for [account] — the JSON is `input/[filename].json`, period is [month year]."*
+> This is the analysis prompt the skills execute. To run, use a skill (e.g. `/analytics-run <hint>`).
+> Drop the customer JSON in `data/input/` first; the skill resolves the file and reads the period from the data.
 
 ## Step 0 — Run the extractor first (saves ~80% of read time)
 
 The extractor pre-computes totals, spike detection, format sums, and per-view sizes into a compact ~35KB file instead of the raw JSON which can be 150KB+.
 
-Check if `input/[ACCOUNT]-extracted.txt` already exists. If not, run:
+Check if `data/extracted/[ACCOUNT]-extracted.txt` already exists. If not, run:
 
 ```bash
-python3 input/extract.py input/[JSON FILE].json > input/[ACCOUNT]-extracted.txt
+python3 agent/extract.py data/input/[JSON FILE].json > data/extracted/[ACCOUNT]-extracted.txt
 ```
 
-Then use `input/[ACCOUNT]-extracted.txt` as the data file for all phases below.
+Then use `data/extracted/[ACCOUNT]-extracted.txt` as the data file for all phases below.
 
 ---
 
 ```
 You are an ImageKit Customer Success Manager analysing a customer's monthly analytics JSON export to prepare for an account review call.
 
-Before starting anything: use the Read tool to read guardrails.md in this project. Follow all rules in guardrails.md throughout this entire run — it contains technical rules, UA classification patterns, flag thresholds, and bandwidth saving estimates.
+Before starting anything: use the Read tool to read `.claude/rules/guardrails.md` in this project. Follow all rules in guardrails.md throughout this entire run — it contains technical rules, UA classification patterns, flag thresholds, and bandwidth saving estimates.
 
 The data file you will read is the pre-extracted summary (not the raw JSON). All key fields are present. If a specific URL or field is missing from the extract, note it but do not attempt to read the raw JSON — the extract covers all fields used in the prompt phases.
 
@@ -36,13 +36,11 @@ If the user provided account context in their message — call purpose, known co
 
 ## SETUP — Create Output Files
 
-Create three output files immediately using the Write tool before any analysis begins:
+Create three output files immediately using the Write tool before any analysis begins. Write to `data/output/[account]/` — create the folder if it doesn't exist:
 
-- `outputs/[account]-[period]-trace.md` — analysis trace (internal reasoning log)
-- `outputs/[account]-[period]-analysis.md` — full technical analysis (internal)
-- `outputs/[account]-[period]-customer-report.md` — customer-facing monthly report
-
-Default save location is `outputs/`. If running a test, the user will tell you — save to `test/` instead.
+- `data/output/[account]/[account]-[period]-trace.md` — analysis trace (internal reasoning log)
+- `data/output/[account]/[account]-[period]-analysis.md` — full technical analysis (internal)
+- `data/output/[account]/[account]-[period]-customer-report.md` — customer-facing monthly report
 
 All three start with just the title and date as placeholders.
 
@@ -117,7 +115,7 @@ Read: `request.total`, `bandwidth.total`, `storage_bytes.total`, `request.dateWi
 - Overall requests + bandwidth for the period
 - Storage used
 - Daily trend from `dateWise` — is traffic growing, flat, or declining?
-- Spike detection: flag any day where requests or bandwidth > 2× the daily average
+- Spike detection: flag daily spikes per §11 threshold
   - **Recommendation if spike found:** Note the date and ask customer on the call whether it was a campaign, product launch, or unexpected event
 - Pattern breakdown: which URL groups / folders drive the most traffic and bandwidth
 
@@ -134,6 +132,8 @@ Append findings to analysis file. Append trace entry.
 ---
 
 ## PHASE 2 — FORMAT DELIVERY
+
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
 
 Read: `formatWise` only.
 
@@ -168,37 +168,31 @@ Append findings to analysis file. Append trace entry.
 
 ## PHASE 3 — TRAFFIC SOURCE CLASSIFICATION
 
-Read: `topUserAgent`, `browserDistribution`, `deviceTypeDistribution`
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
 
-Classify every entry in `topUserAgent` into one of five categories using the rules in guardrails.md:
+Read: `topUserAgent`, `browserDistribution`
 
-| Category | What it means |
+Each entry in `topUserAgent` already has a pre-classified `label=` from `extract.py`. Use those labels to group entries into categories:
+
+| Category | Label prefix |
 |---|---|
-| Web Browser | Standard web app traffic — Chrome, Safari, Firefox, Edge, Samsung |
-| Native Mobile App | Dart, OkHttp, iOS URLSession, CFNetwork, Flutter |
-| In-App Browser | Facebook, Instagram, Twitter, WeChat in-app browsers |
-| Bot / AI Agent | Claude-User, GPTBot, Googlebot, ai-sdk, python-httpx, Bingbot |
-| Server-side / Programmatic | node, axios, python-requests, curl, node-fetch |
+| Web Browser | `Chrome`, `Safari`, `Firefox`, `Edge`, `Samsung Browser` (any browser name without `Native App` or `Bot`) |
+| Native Mobile App | `Native App ·` |
+| In-App Browser | `In-App Browser ·` |
+| Bot / AI Agent | `Bot ·` |
+| Server-side / Programmatic | `Server-side ·` |
+| Unclassified | `Unclassified` — use general knowledge to make a best-effort inference; flag with ⚠️ |
 
-Produce a summary table:
+Sum request counts per category. Produce a summary table:
 
 | Category | Requests | % of Total | Bandwidth | Notes |
 |---|---|---|---|---|
 
-**Mobile browser % — parse from `topUserAgent` directly:**
+**Mobile browser %:**
 
-Within the Web Browser category, identify mobile browser UAs by parsing the raw UA strings in `topUserAgent`:
-- Mobile Chrome: UA contains `Android` + `Chrome`
-- Mobile Safari: UA contains `iPhone` or `iPad`
-- Samsung Browser: UA contains `SamsungBrowser`
-- Other mobile browsers: UA contains `Mobile` keyword
-
-Sum the request counts for all mobile browser UAs → `mobile_browser_requests`.
-Sum the request counts for all desktop browser UAs (Web Browser category minus mobile UAs) → `desktop_browser_requests`.
+Within Web Browser entries, identify mobile UAs by their label — `· Mobile` in the device-type portion of the label (e.g. `Chrome 124 · Android 13 · Mobile`). Sum mobile browser requests and desktop browser requests separately.
 
 Mobile browser % of total browser traffic = `mobile_browser_requests` / (`mobile_browser_requests` + `desktop_browser_requests`) × 100.
-
-Cross-check this figure against `deviceTypeDistribution` Smartphone count as a sanity check. If the two figures are significantly different, note the discrepancy.
 
 State the mobile browser % clearly — it is carried forward into Phase 4.
 
@@ -218,12 +212,12 @@ For video:
 - Mobile browser % > 0% → always carry mobile % to Phase 4 regardless of volume
 - Native Mobile App detected:
   - For images → use speculative language — we see the UA signal but cannot confirm format delivery from logs. Flag by client type:
-    - **Flutter / Dart:** recommend `f-webp` only. Do NOT recommend `f-avif` — not natively supported in Flutter. Reference: `docs/native-mobile-format-support.md`
+    - **Flutter / Dart:** recommend `f-webp` only. Do NOT recommend `f-avif` — not natively supported in Flutter. Reference: `agent/docs/native-mobile-format-support.md`
     - **iOS native (CFNetwork / URLSession):** recommend `f-webp`. Safe for iOS 14+.
     - **Android native (OkHttp):** recommend `f-webp`. Safe for Android 4.0+.
   - Do not flag if there is clear evidence the customer is already explicitly setting `f-webp` in app URLs — that means they've solved it.
   - For video → flag: native app clients do not send a standard User-Agent, so ImageKit cannot detect WebM support. Explicitly force the video format in URLs served to native app clients.
-  - Reference: https://imagekit.io/docs/production-checklist#mobile-app-specific-optimizations and `docs/native-mobile-format-support.md`
+  - Reference: https://imagekit.io/docs/production-checklist#mobile-app-specific-optimizations and `agent/docs/native-mobile-format-support.md`
 - Bot / AI Agent > 15% of total requests → flag
   - **Recommendation:** Non-human traffic inflates usage metrics. Discuss on the call whether this is expected and whether rate limiting is needed.
 - In-App Browser > 10% → flag
@@ -234,6 +228,8 @@ Append findings to analysis file. Append trace entry.
 ---
 
 ## PHASE 4 — RESIZE & TRANSFORM COVERAGE
+
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
 
 This phase answers: **how widely are ImageKit transforms being used, and are high-traffic assets being resized?**
 
@@ -306,6 +302,8 @@ Append findings to analysis file. Append trace entry.
 
 ## PHASE 5 — TOP ASSETS
 
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
+
 Read: `topImages.bandwidthWise`, `topImages.requestWise`, `topVideos.bandwidthWise`, `topVideos.requestWise`, `topOthers.bandwidthWise`, `top404`
 
 ### Top Images
@@ -349,6 +347,8 @@ Append findings to analysis file. Append trace entry.
 ---
 
 ## PHASE 6 — TRANSFORMATION ANALYSIS
+
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
 
 Read: `transform.items`, `videoTransform.items`, `resultType`
 
@@ -422,6 +422,8 @@ Append findings to analysis file. Append trace entry.
 
 ## PHASE 7 — TOP IPs
 
+> Apply flag thresholds from guardrails §11 — do not use your own judgment on what counts as high or low.
+
 Read: `topIps`
 
 - List top 5 IPs with request count, bandwidth, and % of total requests
@@ -486,7 +488,7 @@ Append findings to analysis file. Append trace entry.
 
 The analysis file is already built incrementally. Now complete and finalise it.
 
-File: `outputs/[account]-[period]-analysis.md`
+File: `data/output/[account]-[period]-analysis.md`
 
 Structure:
 1. **Header** — Account name, period, prepared date
@@ -526,7 +528,7 @@ Structure:
 
 ## OUTPUT 2 — Customer-Facing Monthly Report
 
-Write `outputs/[account]-[period]-customer-report.md`.
+Write `data/output/[account]-[period]-customer-report.md`.
 
 Tone: professional and clear. Written for a business stakeholder — not an engineer. No jargon, no JSON field names, no raw URLs. Name findings by product area ("your product images", "your hero banners") not by filename or URL.
 
@@ -593,7 +595,7 @@ No "Why it matters" section. No saving estimates.
 1. **Native app traffic may not be receiving optimised formats**
    - Detection: Native app UA detected (Dart/Flutter, OkHttp, CFNetwork) AND transform adoption is low for those requests, OR format data suggests JPEG/PNG dominant overall
    - Use speculative language throughout
-   - Flutter: `f-webp` only. Do NOT mention `f-avif`. Reference `docs/native-mobile-format-support.md`.
+   - Flutter: `f-webp` only. Do NOT mention `f-avif`. Reference `agent/docs/native-mobile-format-support.md`.
    - iOS native: `f-webp` separately
    - Do not flag if there is evidence the customer already sets `f-webp` in app URLs
 
@@ -659,4 +661,13 @@ One-liner above the table: "These were spotted in the delivery logs. Not ImageKi
 - VPU is video-only — never reference in image findings
 - `tr=orig` is video-only — never flag it as an error
 - Named transforms (`n-`): note positively, skip param checks — underlying params not visible in analytics
+
+---
+
+## FINAL RESPONSE — Output Delivery
+
+After all phases and both outputs are complete:
+
+1. **Present the customer report inline in your response, copyable** — output the full customer report inside a fenced ```markdown block so the raw markdown can be copied directly.
+2. **All 3 files are already saved** — written to `data/output/[account]/` during the run. Do not ask where to save.
 ```
