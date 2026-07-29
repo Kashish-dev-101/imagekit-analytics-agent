@@ -21,7 +21,7 @@ The agent is driven by skills in `.claude/skills/`. **`analytics-preflight` runs
 
 | Skill | Use |
 |-------|-----|
-| `/analytics-run <hint>` | Full report — all 8 phases, 3 outputs |
+| `/analytics-run <hint>` | Full report — all 9 phases, 3 outputs |
 | `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache, ABS. One MD, state only (no recommendations) |
 | `/analytics-compare <hint>` | Month-over-month diff (resolves two files) |
 | `/analytics-report-edit <hint>` | Safe edits to a customer report (no re-run) |
