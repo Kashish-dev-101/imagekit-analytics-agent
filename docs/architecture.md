@@ -16,9 +16,7 @@ data/                   Runtime data — gitignored, except folder structure + i
   extracted/            Generated compact summaries (produced by extract.py)
   output/               Analysis outputs — [account]/ holds the current review; older ones move to [account]/archive/[period]/
   reference-outputs/    Example analyses — Vax, Morphic, Popopo (older single-file format)
-archive/                Old prompt versions, retired scripts, project history — gitignored, except README.md
-  removed-sections.md   Sections cut from CLAUDE.md, kept for reference
-  restructure-log.md    Log of the 2026-06-08 folder restructure
+archive/                Old prompt versions, retired scripts — gitignored, except README.md
   test/                 Prompt-development test runs — customer-report-prompt-notes.md is active reference for prompt work, not disposable
 setup/
   installation.md       One-time setup guide
