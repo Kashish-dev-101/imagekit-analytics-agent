@@ -83,7 +83,6 @@ data/                   Runtime data (gitignored — customer data stays local)
   input/                Customer JSON exports
   extracted/            Generated compact summaries (produced by extract.py)
   output/               Working output location during runs
-reference-outputs/      Example analyses — older single-file format (gitignored, local only)
 archive/                Old prompt versions, retired scripts
   test/                 Prompt-development test runs (gitignored)
 ```
