@@ -32,7 +32,8 @@ The agent is driven by skills in `.claude/skills/`. **`analytics-preflight` runs
 
 **Full analysis (`/analytics-run`):**
 - Create `data/output/[account]/` if it doesn't exist
-- Write all 3 files into that folder
+- **Before writing new files:** check if `data/output/[account]/` already contains a prior review's 3 files (loose `[account]-[old-period]-*.md` directly in that folder, not already inside `archive/`). If so, move them into `data/output/[account]/archive/[old-period]/` first — create that folder if needed. This keeps only the current/latest review visible at the top level of each account's output folder, with history preserved underneath.
+- Write all 3 new files into `data/output/[account]/`
 - Show the customer report in the chat inside a copyable markdown block
 - Do not ask where to save — it's already done
 
@@ -64,16 +65,16 @@ data/                  Customer data — gitignored, stays local
   input/               Drop customer JSONs here
   extracted/           Generated compact summaries
   output/              Analysis outputs organised by account
+  reference-outputs/   Example analyses (Vax, Morphic, Popopo) — older single-file format
 setup/
   installation.md      One-time setup guide — Node.js, VS Code, Claude Code, Python
-reference-outputs/     Example analyses — gitignored, local only
 archive/               Old prompt versions — gitignored
 README.md              Human entry point
 AGENTS.md              Cross-tool agent notes (Codex)
 .mcp.json              MCP server configuration
 ```
 
-**Gitignored:** `data/`, `reference-outputs/`, `archive/`
+**Gitignored:** `data/`, `archive/`
 
 ---
 

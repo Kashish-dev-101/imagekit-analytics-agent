@@ -34,6 +34,7 @@ Each of these can be invoked directly, independent of a full run:
 | `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache. State only, no recommendations |
 | `/analytics-compare <hint>` | Month-over-month diff between two exports |
 | `/analytics-report-edit <hint>` | Safe edits to a finished customer report — no re-run |
+| `/clear-analytics-data` | Clears `data/input/` and `data/extracted/` for a fresh testing round. Never touches `data/output/`. |
 
 `analytics-preflight` runs automatically before any of the above — it resolves which file in `data/input/` to use and routes to the right skill.
 
