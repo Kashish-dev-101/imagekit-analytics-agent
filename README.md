@@ -30,7 +30,7 @@ Each of these can be invoked directly, independent of a full run:
 
 | Skill | Use |
 |-------|-----|
-| `/analytics-run <hint>` | Full report — all 9 phases, 3 output files |
+| `/analytics-run <hint>` | Full report — all 8 phases, 3 output files |
 | `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache. State only, no recommendations |
 | `/analytics-compare <hint>` | Month-over-month diff between two exports |
 | `/analytics-report-edit <hint>` | Safe edits to a finished customer report — no re-run |
@@ -75,7 +75,7 @@ Or in plain language, optionally adding account context that should shape the fi
 
 > "Run the analysis for Girnar — JSON is `data/input/girnar.json`, March 2026. This is a renewal call and they've been asking about bandwidth costs."
 
-Claude resolves the file, runs the extractor, works through all 9 phases, and saves the three output files — nothing to confirm mid-run.
+Claude resolves the file, runs the extractor, works through all 8 phases, and saves the three output files — nothing to confirm mid-run.
 
 ### 4. Review the outputs
 
@@ -95,7 +95,7 @@ For a faster pulse check instead of the full run, use `/analytics-quickcheck <hi
 
 ## Learn More
 
-- **Full phase-by-phase breakdown** (all 9 phases in detail) → [`docs/phases.md`](./docs/phases.md)
-- **Folder structure & what's gitignored** → [`docs/architecture.md`](./docs/architecture.md)
+- **Full phase-by-phase breakdown** (all 8 phases in detail) → [`project-docs/phases.md`](./project-docs/phases.md)
+- **Folder structure & what's gitignored** → [`project-docs/architecture.md`](./project-docs/architecture.md)
 - **Technical rules, thresholds, UA classification** → [`.claude/rules/guardrails.md`](./.claude/rules/guardrails.md). The one rule worth knowing up front: **check for data truncation before drawing any format or device conclusion** — high-traffic accounts often have dimensional breakdowns capping at 10–15% of total, and every other rule assumes that check happened first.
 - **Codex / other coding assistant instructions** (work in progress) → [`AGENTS.md`](./AGENTS.md)

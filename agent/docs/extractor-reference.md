@@ -36,7 +36,7 @@ Fields present in the JSON:
 | `bandwidth` | `{total, dateWise, pattern}` | Same structure as request |
 | `storage_bytes` | `{total}` | May be empty `{}` — handled gracefully |
 | `storage` | `{dateWise: [{date, avgUploadStorage, avgOriginalCacheStorage}]}` | Daily avg storage |
-| `formatWise` | `{requestWise: [...], bandwidthWise: [...]}` | Format delivery by count and bandwidth |
+| `formatWise` | `{requestWise: [...], bandwidthWise: [...]}` | All MIME types served — images, video, JS, CSS, fonts, audio, PDFs and more. Filter by `name` prefix when computing image-only or video-only totals (`image/`, `video/`). |
 | `statusCodeWise` | `{requestWise: [...], bandwidthWise: [...]}` | requestWise items have no bandwidth field |
 | `errorCodeWise` | flat list `[{name, count}]` | Not wrapped — exception to the pattern |
 | `resultType` | `{requestWise: [...], bandwidthWise: [...]}` | Cache hit/miss/error |
@@ -44,8 +44,7 @@ Fields present in the JSON:
 | `referral` | `{requestWise: {items}, bandwidthWise: {items}}` | Items nested inside sub-object |
 | `topUserAgent` | `{requestWise: [...], bandwidthWise: [...]}` | All 50 items, both views |
 | `browserDistribution` | `{requestWise: [...], bandwidthWise: [...]}` | |
-| `deviceTypeDistribution` | `{requestWise: [...], bandwidthWise: [...]}` | Desktop / Mobile / Bot / Unknown |
-| `deviceDistribution` | `{requestWise: [...], bandwidthWise: [...]}` | More granular device breakdown |
+| `deviceDistribution` | `{requestWise: [...], bandwidthWise: [...]}` | Granular device breakdown (e.g. "Smartphone - Apple iPhone") |
 | `transform` | `{requestWise: {count, bandwidth, items}, bandwidthWise: {count, bandwidth, items}}` | All transform strings |
 | `videoTransform` | Same as transform | |
 | `topImages` | `{bandwidthWise: [{url, bandwidth, views}], requestWise: [{url, bandwidth, views}]}` | All 50 items |

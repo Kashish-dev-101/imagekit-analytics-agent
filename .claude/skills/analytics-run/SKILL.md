@@ -1,5 +1,5 @@
 ---
-description: Full ImageKit analytics analysis — all 9 phases, produces three files: internal technical analysis, reasoning trace, and customer-facing report. Use for monthly account reviews or when you need the complete picture with recommendations.
+description: Full ImageKit analytics analysis — all 8 phases, produces three files: internal technical analysis, reasoning trace, and customer-facing report. Use for monthly account reviews or when you need the complete picture with recommendations.
 when_to_use: Monthly analytics reviews, account review call prep, or when a quickcheck has flagged issues that need investigating. Produces 3 output files.
 ---
 
@@ -24,7 +24,7 @@ python3 agent/extract.py data/input/<file>.json > data/extracted/<account>-extra
 ```
 
 ## 3. Run the full analysis
-Follow `agent/prompt.md` exactly — all phases (0–8), all output instructions, and all file creation steps. Read `.claude/rules/guardrails.md` before starting and apply all rules throughout.
+Follow `agent/prompt.md` exactly — all phases (0–7), all output instructions, and all file creation steps. Read `.claude/rules/guardrails.md` before starting and apply all rules throughout.
 
 The prompt defines the full output format including trace logging after each phase, the technical analysis structure, and the customer report format. Follow it as written — do not simplify or merge the three outputs into one.
 

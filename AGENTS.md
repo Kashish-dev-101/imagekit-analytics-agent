@@ -137,7 +137,7 @@ These apply at all times, regardless of what the user asks.
 
 Full detail in `guardrails.md`. Critical rules to apply from the start:
 
-- **Check truncation first** — verify that dimensional breakdowns (formatWise, deviceTypeDistribution, country) sum close to `request.total` before drawing conclusions. If they cap at 10–15% of total, the data is truncated — flag it prominently.
+- **Check truncation first** — verify that dimensional breakdowns (formatWise, deviceDistribution, country) sum close to `request.total` before drawing conclusions. If they cap at 10–15% of total, the data is truncated — flag it prominently.
 - **WebP ≠ AVIF** — WebP is automatic. AVIF must be explicitly enabled in account settings. Never treat them as the same.
 - **`tr=orig` is video-only** — intermediate first-request response for uncached video transformations. Not an error.
 - **`f-auto` + native apps** — doesn't work for OkHttp/URLSession/Dart clients. Explicit `f-webp` needed in image URLs.

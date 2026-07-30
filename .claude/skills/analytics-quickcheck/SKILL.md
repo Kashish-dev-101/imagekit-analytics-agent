@@ -27,12 +27,12 @@ Read `agent/prompt.md` and `.claude/rules/guardrails.md` before starting. Follow
 | Phase 2 | Full — image and video format delivery | — |
 | Phase 3 | Traffic mix % only — classify into: desktop browser, mobile browser, native mobile app, bot/AI agent, server-side. Report % of total for each. | Phase 2 cross-reference, per-client-type flag rules |
 | Phase 4 | Step 1 only — transform adoption % | All per-asset dimension fetching, video width cap checks |
-| Phase 6 | Cache hit rate only — read `resultType`, compute Hit / (Hit + Miss) | Full transform strategy, sprawl analysis, near-duplicate checks |
+| Phase 5 | Cache hit rate only — read `resultType`, compute Hit / (Hit + Miss) | Full transform strategy, sprawl analysis, near-duplicate checks |
 
-**Also check (from Phase 6 data):**
-Scan `videoTransform.items` for DASH or HLS patterns (`sr-`, `protocol-dash`, `protocol-hls`). Note whether ABS is active or not detected.
+**Also check (from Phase 5 data):**
+Scan `videoTransform.requestWise.items` for DASH or HLS patterns (`sr-`, `protocol-dash`, `protocol-hls`). Note whether ABS is active or not detected.
 
-**Skip entirely:** Phase 5 (top assets), Phase 7 (top IPs), Phase 8 (VPU)
+**Skip entirely:** Phase 6 (top IPs), Phase 7 (VPU)
 
 ## 4. Output mode — state only
 

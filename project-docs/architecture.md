@@ -20,10 +20,9 @@ archive/                Old prompt versions, retired scripts — gitignored, exc
   test/                 Prompt-development test runs — customer-report-prompt-notes.md is active reference for prompt work, not disposable
 setup/
   installation.md       One-time setup guide
-docs/
-  phases.md             Full phase-by-phase breakdown (0–8)
-  architecture.md        This file
-  examples.md           Reference example analyses
+project-docs/
+  phases.md             Full phase-by-phase breakdown (0–7)
+  architecture.md       This file
 ```
 
 ## What's gitignored
