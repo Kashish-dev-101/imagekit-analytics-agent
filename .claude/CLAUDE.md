@@ -21,7 +21,7 @@ The agent is driven by skills in `.claude/skills/`. **`analytics-preflight` runs
 
 | Skill | Use |
 |-------|-----|
-| `/analytics-run <hint>` | Full report — all 9 phases, 3 outputs |
+| `/analytics-run <hint>` | Full report — all 8 phases, 3 outputs |
 | `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache, ABS. One MD, state only (no recommendations) |
 | `/analytics-compare <hint>` | Month-over-month diff (resolves two files) |
 | `/analytics-report-edit <hint>` | Safe edits to a customer report (no re-run) |
@@ -108,7 +108,7 @@ These rules apply at all times, regardless of what the user asks.
 
 @.claude/rules/guardrails.md
 
-- **Check truncation first** — before drawing conclusions from dimensional breakdowns (formatWise, deviceTypeDistribution, country), verify they sum close to `request.total`. If they cap at 10–15% of total, the data is truncated (known platform bug). Flag it prominently.
+- **Check truncation first** — before drawing conclusions from dimensional breakdowns (formatWise, deviceDistribution, country), verify they sum close to `request.total`. If they cap at 10–15% of total, the data is truncated (known platform bug). Flag it prominently.
 
 ---
 

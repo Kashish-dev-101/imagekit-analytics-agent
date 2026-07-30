@@ -59,7 +59,9 @@ WebP or AVIF in `formatWise` can come from any of these three mechanisms. From t
 
 **Images:** Content negotiation uses the `Accept` header. Native mobile app clients (OkHttp, URLSession, Dart) often do not send correct `Accept` headers — or libraries like OkHttp may override them — so they receive the original format regardless of account settings or `f-auto`. Fix: explicitly set `f-webp` in the URL for native app image requests. For modern Android versions that support AVIF, `f-avif` can be used instead for better compression.
 
-**Videos:** Content negotiation uses the `User-Agent` header (`vary: User-Agent`), not the `Accept` header. Native mobile app clients often do not send a standard browser User-Agent — ImageKit cannot detect WebM support and falls back to the original format (typically MP4). Fix: explicitly force the output format in the video URL for native app clients.
+**Videos:** Content negotiation uses the `User-Agent` header (`vary: User-Agent`), not the `Accept` header. Native mobile app clients often do not send a standard browser User-Agent — ImageKit cannot detect WebM support and falls back to the original format (typically MP4). Fix: explicitly force the output format in the video URL for native app clients — but the correct format is platform-specific, not universal:
+- **Android native / Flutter-Android:** `f-webm` (VP9) is safe — plays natively via ExoPlayer from Android 4.4+.
+- **iOS native / Flutter-iOS:** `f-mp4` (H.264) only. WebM never plays on iOS regardless of chip — AVPlayer cannot open the WebM container at all, so ImageKit's VP9/AV1 output (always WebM) is unreachable there. Never recommend `f-webm` or `vc-av1` for iOS native traffic. Reference: `agent/docs/native-mobile-format-support.md`
 
 Never apply the image fix (`f-webp`) to video URLs or vice versa. The detection mechanism is different for each.
 
@@ -112,11 +114,18 @@ WebM delivery for videos works via `User-Agent` header inspection (`vary: User-A
 
 **Codec units:**
 - H.264 / VP9 = 1× (standard)
-- AV1 = 10× — flag if `vc-av1` appears in transform strings, VPU cost is 10× higher
+- AV1 = 10× — flag if `vc-av1` appears in transform strings, VPU cost is 10× higher. AV1 is currently in **beta** on ImageKit (dashboard shows a beta callout under Video Settings).
 
 **Special operations:**
 - Thumbnail generation = 30 VPU (fixed — equivalent to 30s SD video). Multiple thumbnail sizes = multiple charges.
 - ABS = 30 VPU fixed + per-representation charges based on resolution and duration.
+- Audio extraction (`vc-none` transformation) = equal to processing the output audio's duration at SD resolution.
+- Video smart crop = +1 additional VPU per second of output per smart-crop operation, on top of standard VPU consumption.
+
+**AV1 enablement and delivery behavior:**
+- AV1 is WebM-only in ImageKit — never supported with `f-mp4`. If a transform string somehow shows both, treat it as a labeling artifact, not real output.
+- **Auto AV1** requires two things together: the account's "Allowed video codecs" dashboard setting must include `av1` (grouped as `h264, vp9, av1` — no standalone AV1-only toggle), AND `tr=f-auto` in the URL. The account setting alone, without `f-auto`, falls back to VP9 — not AV1.
+- **Explicit `vc-av1`** bypasses the account setting entirely and forces AV1 for every client, with no `vary: User-Agent` header — no graceful fallback. Since WebM never plays in native iOS apps (AVPlayer cannot open the WebM container, regardless of chip), a hardcoded `vc-av1` is a playback-breaking risk if iOS native app traffic is present — flag this distinctly from the VPU cost concern.
 
 > Reference: [VPU Pricing](https://imagekit.io/docs/how-pricing-works#video-processing-units-pricing)
 
@@ -124,7 +133,7 @@ WebM delivery for videos works via `User-Agent` header inspection (`vary: User-A
 
 ## 7. `ik-cacheTime` ≠ Signature Expiry
 
-`ik-cacheTime` controls the TTL of ImageKit's internal intermediate cache for transformed assets. It has nothing to do with signed URL expiry or browser caching. Only available on enterprise plans.
+`ik-cacheTime` controls the TTL of ImageKit's internal intermediate cache for transformed assets. It has nothing to do with signed URL expiry or browser caching. Only available on enterprise plans, and usage is restricted to signed URLs only — the parameter has no effect unless the URL is signed.
 
 ---
 
@@ -185,6 +194,7 @@ Apply these consistently across all accounts.
 |--------|-----------|------|--------|
 | **Traffic** | | | |
 | Daily request spike | > 2× daily average | ⚠️ | Note date — ask customer if expected (campaign, launch, bot event) |
+| Daily bandwidth spike | > 2× daily average bandwidth | ⚠️ | Note date — check if it's a large-asset/big-file event vs a real traffic spike |
 | Single country % of requests | > 60% | ⚠️ | Single-market concentration — note for account context |
 | 404 rate | > 1% of total | ⚠️ | Broken references — group top404 by pattern |
 | **Format** | | | |
@@ -195,7 +205,7 @@ Apply these consistently across all accounts.
 | Mobile browser % of browser traffic | > 50% | ⚠️ HIGH | Resize optimisation is highest-impact action for this account |
 | Bot / AI Agent traffic | > 15% of requests | ⚠️ | Non-human traffic is significant — note for usage cost discussion |
 | In-App Browser traffic | > 10% of requests | ⚠️ | Check format delivery behaviour for these clients |
-| Native Mobile App detected | any | flag | `f-auto` won't work — explicit `f-webp` needed |
+| Native Mobile App detected | any | flag | Images: `f-auto` won't work — explicit `f-webp` needed. Video: format is platform-specific — `f-webm` safe for Android, `f-mp4` only for iOS (never `f-webm`/`vc-av1` on iOS). See §4. |
 | **Transform Coverage** | | | |
 | Transform adoption rate | < 30% of total requests | 🔴 | Low adoption — significant optimisation gap |
 | Transform adoption rate | 30–70% of total requests | ⚠️ | Partial adoption |
@@ -211,8 +221,11 @@ Apply these consistently across all accounts.
 | Near-duplicate transforms | width diff < 10px | ⚠️ | Consolidation opportunity |
 | Cache hit rate (Hit / Hit+Miss) | < 80% | ⚠️ | Check for unique transforms or signed URL usage |
 | **IPs** | | | |
-| Single IP % of total requests | > 5% | ⚠️ | Concentration risk — potential scraper or single app server |
-| Single IP avg bandwidth per request | > 1 MB | ⚠️ | Full-resolution downloads — check what transforms are applied |
+| Single IP % of total requests | > 5% | ⚠️ | Request concentration — potential scraper, bot, or rogue backend |
+| Single IP % of total bandwidth | > 10% | ⚠️ | Bandwidth concentration — high volume of requests adding up, even if per-asset size is small |
+| Single IP avg bandwidth per request | > 1 MB | ⚠️ | Large asset downloads — bot pulling originals or unoptimized assets |
+| **Storage** | | | |
+| Total storage used | > 500 GB | 💡 | DAM-relevance signal for the CSM — this volume of stored media is a natural fit for ImageKit's DAM features. Internal note only, never part of the customer report's fixed opportunity taxonomy |
 
 ---
 
