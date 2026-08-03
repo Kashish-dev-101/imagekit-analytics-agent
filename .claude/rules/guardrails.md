@@ -265,7 +265,7 @@ Native ImageKit transforms use `tr:` prefix with hyphens: `tr:w-300,h-200,f-webp
   - Imgix: `fm=jpg`, `fm=png`
   - Akamai: `imformat=generic`, `imformat=safari`
 - **Transform sprawl:** unique string count may appear inflated — Cloudinary and IK variants of the same transform appear as separate strings
-- **Recommendations:** frame in terms of the rewriter syntax the customer actually uses, not native IK params
+- **Recommendations:** always use native ImageKit transform syntax (`tr:w-720`, `c-at_max`, etc.) — even for accounts using a URL rewriter. The goal of a recommendation is to show what ImageKit can do natively. Do not translate params into Cloudinary, Akamai, or Imgix syntax.
 
 ### What stays the same
 
