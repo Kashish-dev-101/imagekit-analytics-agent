@@ -22,9 +22,16 @@ The agent is driven by skills in `.claude/skills/`. **`analytics-preflight` runs
 | Skill | Use |
 |-------|-----|
 | `/analytics-run <hint>` | Full report — all 8 phases, 3 outputs |
-| `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache, ABS. One MD, state only (no recommendations) |
-| `/analytics-compare <hint>` | Month-over-month diff (resolves two files) |
+| `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, top bandwidth assets, cache, ABS. One MD, state only (no recommendations) |
+| `/analytics-compare <hint>` | Period-over-period diff — equal-duration exports, any date range. Factual state only, no external inference |
 | `/analytics-report-edit <hint>` | Safe edits to a customer report (no re-run) |
+| `/ip-lookup <ip> [ip2 ip3...]` | Look up one or more IPs via ipinfo.io and classify each — CDN, cloud backend, residential ISP, VPN/proxy, bot |
+| `/url-check <url>` | Check what a URL is serving — delivery vendor, format, cache HIT/MISS, vary headers, and origin hosting (dig + ipinfo) |
+| `/ik-debug <url> [runs]` | Debug an ImageKit URL with `ik-debug=true` — latency, transformation time, ik-error, CloudFront PoP. Default 3 runs |
+| `/transform-test <url>` | Interactively test transforms on an IK URL — baseline, auto format, resize, format override, server timing |
+| `/origin-vendor <domain>` | Resolve a domain to its hosting/infrastructure vendor via dig + ipinfo.io |
+| `/imagekit-cname-check <domain> [domain2...]` | Check if a domain (or several) is CNAME'd to ImageKit — resolves DNS and reports the endpoint id |
+| `/custom-domain-request <domain> <clientNumber> [imagekitID]` | Check custom domain DNS state and produce the right message — internal activation request or customer-facing DNS fix |
 
 ---
 

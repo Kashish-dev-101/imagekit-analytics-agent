@@ -53,6 +53,8 @@ If both checks pass, continue to Step 1 without mentioning the check.
 
 ## 2. Route to the right skill
 
+**Analytics skills (JSON-based — this preflight applies):**
+
 | User intent | Route to |
 |---|---|
 | full analysis, "run the analysis", monthly review, account-review prep | `analytics-run` |
@@ -62,6 +64,22 @@ If both checks pass, continue to Step 1 without mentioning the check.
 | edit / reword / reprioritise a finished report | `analytics-report-edit` |
 
 **Tie-breaker:** an unqualified "run the analysis" means the FULL run (`analytics-run`), never the trimmed `analytics-quickcheck`. If you genuinely cannot tell whether the user wants the full report or a quick pulse, ask — *"Full report or a quick pulse?"* — don't silently run the trimmed one. An explicit slash command always wins.
+
+---
+
+**Non-analytics skills — skip this preflight entirely:**
+
+These skills work on a URL, domain, or IP directly. They do not need a JSON file, do not need the Python environment check, and do not go through preflight. Invoke them directly.
+
+| Skill | What it takes |
+|---|---|
+| `/url-check` | A URL |
+| `/ik-debug` | An ImageKit URL |
+| `/transform-test` | An ImageKit image URL |
+| `/ip-lookup` | One or more IP addresses |
+| `/origin-vendor` | A domain name |
+| `/imagekit-cname-check` | A domain name |
+| `/custom-domain-request` | A domain + client number |
 
 ## 3. Hand off
 
