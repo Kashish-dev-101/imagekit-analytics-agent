@@ -43,7 +43,7 @@ Create three output files immediately using the Write tool before any analysis b
 
 All three start with just the title and date as placeholders.
 
-After completing each phase: append findings to the analysis file AND append a trace entry to the trace file before moving to the next phase. Do not batch writes at the end.
+After every phase, use the Edit tool to append findings to the analysis file and append a trace entry to the trace file before moving to the next phase. Each phase ends with an explicit write gate — do not skip it.
 
 ---
 
@@ -52,6 +52,8 @@ After completing each phase: append findings to the analysis file AND append a t
 The trace file has two parts: a Reasoning Stream written once before Phase 0, and per-phase entries appended after each phase.
 
 ### Part 1 — Reasoning Stream (write once, before Phase 0)
+
+**Use the Edit tool to write the Reasoning Stream to the trace file now. Do not call any tool for Phase 0 — no Read, no Bash, no Edit for analysis — until the trace write for the Reasoning Stream is confirmed complete.** The Reasoning Stream must be the first thing written to the trace file, not filled in retrospectively after the analysis is done.
 
 Write a Reasoning Stream section at the top of the trace file. This is the actual thinking behind the analysis — not just decisions, but the process of reaching them. Write in plain prose, not bullet points.
 
@@ -109,6 +111,8 @@ Before drawing any conclusions, verify whether the dimensional breakdowns are co
 
 **If breakdowns are complete:** skip the full trace template — write one line instead: "Phase 0 — Data integrity check: formatWise (X%) and deviceDistribution (Y%) both within 5% of total. No truncation, proceeding normally." Nothing is added to the analysis file (there's no Phase 0 section in OUTPUT 1 — only the truncation warning, if applicable).
 
+**Do NOT use the Data Read / Arithmetic / Decision structure for Phase 0 when no truncation is found.** That full trace structure is for Phases 1–7 only. One line in the trace, nothing in the analysis file.
+
 **If truncation is detected:** use the full trace entry structure (Data Read / Arithmetic / Decision) from TRACE FORMAT, and add the prominent warning to the analysis file as described above.
 
 ---
@@ -120,7 +124,7 @@ This phase answers: **how much traffic did this account receive this month, and 
 Read: `request.total`, `bandwidth.total`, `storage_bytes.total`, `request.dateWise`, `bandwidth.dateWise`, `request.pattern`, `country.items`, `referral.items`, `formatWise`
 
 - Overall requests + bandwidth for the period
-- **Average object size:** from `formatWise`, sum bandwidth and requests for all entries where `name` starts with `image/` (images) and separately where `name` starts with `video/` (video). Compute:
+- **Average object size (REQUIRED — do not skip):** from `formatWise`, sum bandwidth and requests for all entries where `name` starts with `image/` (images) and separately where `name` starts with `video/` (video). Compute:
   - Average image size = total image bandwidth ÷ total image requests
   - Average video size = total video bandwidth ÷ total video requests
   - Report both. These headline numbers give immediate context for the bandwidth totals and are carried into Phase 2.
@@ -138,7 +142,9 @@ List the top 5 referral domains with request count and bandwidth. Keep this summ
 
 ⚠️ Important caveat: `referral.items` will not represent total traffic. Native mobile app clients (OkHttp, URLSession, Dart) do not send a `Referer` header, so all native app traffic appears as no-referrer and is excluded from this breakdown. The referrer data reflects browser and web traffic only — do not compare the referrer total against `request.total`.
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
+
+**After writing Phase 1, also write the Account Summary section to the analysis file.** This section must appear BEFORE all phase sections — insert it at the top of the analysis file, after the header. Cover: who the customer is, how they use ImageKit, storage architecture (flag with ⚠️ if inferred), primary market. Do not skip this section.
 
 ---
 
@@ -178,7 +184,7 @@ This phase answers: **what formats did ImageKit serve this month for images and 
   - **Recommendation:** Check Phase 3 — if native app or bot traffic is significant, those clients are likely driving the delivery. For native app video URLs, explicitly force the format in the URL. For browser traffic still receiving non-WebM formats, check transform strings for hardcoded format overrides. For cause (c), append `/ik-video.mp4` to the URL — Phase 4 top video assets will surface unextended URLs if present.
   - Reference: https://imagekit.io/docs/video-optimization#automatic-format-conversion
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -235,7 +241,7 @@ For video:
   - For images → use speculative language — we see the UA signal but cannot confirm format delivery from logs. Flag by client type:
     - **Flutter / Dart:** recommend `f-webp` only. Do NOT recommend `f-avif` — not natively supported in Flutter, regardless of Android/iOS version underneath. Reference: `agent/docs/native-mobile-format-support.md`
     - **iOS native (CFNetwork / URLSession):** recommend `f-webp`. Safe for iOS 14+. If account context confirms a minimum supported OS of iOS 16+, `f-avif` can also be recommended for further savings.
-    - **Android native (OkHttp):** recommend `f-webp`. Safe for Android 4.0+. If account context confirms a minimum supported OS of Android 14+, `f-avif` can also be recommended for further savings.
+    - **Android native (OkHttp):** recommend `f-webp`. Safe for Android 4.0+. If account context confirms a minimum supported OS of Android 14+, `f-avif` can also be recommended — but this gate is required: always write it as "If your minimum supported Android version is 14+, you could also use `f-avif` for further compression savings." Never recommend AVIF for Android without the version caveat, even if AVIF is already active on the account.
   - Do not flag if there is clear evidence the customer is already explicitly setting `f-webp` in app URLs — that means they've solved it.
   - For video → flag: native app clients do not send a standard User-Agent, so ImageKit cannot detect WebM support automatically. The correct fix is platform-specific, not a single generic format:
     - **Android native (OkHttp) / Flutter-Android:** safe to force `f-webm` (VP9) — plays natively via ExoPlayer from Android 4.4+.
@@ -246,7 +252,7 @@ For video:
 - In-App Browser > 10% → flag
   - **Recommendation:** In-app browser Accept header behaviour can be inconsistent. Test format delivery from Facebook/Instagram in-app browser. If JPEG is being served, add explicit `f-webp` to URLs loaded in social contexts.
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -266,11 +272,15 @@ From `formatWise.bandwidthWise`, sum the `bandwidth` field for all entries where
 
 Coverage % = `transform.bandwidthWise.bandwidth` / `image_bandwidth` × 100.
 
+**Coverage is bandwidth-based, not request-based.** Do not use `transform.requestWise` counts for this calculation — use `transform.bandwidthWise.bandwidth` divided by `image_bandwidth` only.
+
 Note: this measures explicit URL-based transform coverage (resize, crop, named transforms) only. Auto format conversion via account-level settings (WebP/AVIF delivery) is not counted here — that is captured in Phase 2 via `formatWise`.
 
-- If > 50% → good coverage ✅ — most image bandwidth is going through explicit transforms
-- If 20–50% → partial coverage ⚠️ — notable gap, high-bandwidth images may not be resized
-- If < 20% → low coverage 🔴 — majority of image bandwidth has no explicit transforms
+- If > 50% → ✅ write exactly **"Strong coverage"**
+- If 20–50% → ⚠️ write exactly **"Partial coverage"**
+- If < 20% → 🔴 write exactly **"Low coverage"**
+
+**The label and flag must match the same band.** Never mix them — e.g. if coverage is 13%, the label is "Low coverage" and the flag is 🔴. Writing "Partial coverage (13%)" with a 🔴 flag is wrong. Writing "Low coverage (13%)" with a ⚠️ flag is also wrong.
 
 **Step 2: Mobile context**
 Use the mobile browser % from Phase 3 as context. State it once: "X% of browser traffic is from mobile devices."
@@ -279,7 +289,7 @@ Use the mobile browser % from Phase 3 as context. State it once: "X% of browser 
 From `topImages.bandwidthWise`, for each image:
 
 - Named transformation (`n-[name]`) in the URL? → note it, skip all param checks — params are inside the named transform in the dashboard
-- SVG file? → skip, vector format, no resize needed
+- SVG file? → **skip immediately, do not flag under any circumstances.** SVGs are vector format — they scale without quality loss and resize transforms are meaningless for them. Never flag an SVG for missing resize regardless of its file size or bandwidth per view.
 - Resize param present? Check `w-`, `h-` (ImageKit-native). For URL-rewriter accounts, also check per guardrails §13: `imwidth=`, `im=Resize=` (Akamai), `w_` (Cloudinary), `w=` (Imgix)
 - Hardcoded `f-jpg` or `f-png`? (only if no named transform)
 - Bandwidth per view = `bandwidth ÷ views`
@@ -288,6 +298,8 @@ From `topImages.bandwidthWise`, for each image:
 
 - Image path already encodes a size (e.g. `630x420` in the folder name)
 - Bandwidth per view < 40KB — not a priority
+
+**Before you can flag or skip any image with no resize param, you MUST run the source dimension fetch.** Without actual dimensions you cannot apply the flag rules correctly — do not estimate or infer dimensions from the URL or filename.
 
 For images with no resize param (after exclusions), fetch source dimensions:
 
@@ -340,12 +352,20 @@ From `topVideos.bandwidthWise`, for each video URL:
 
 **Flag rules:**
 
+**Before flagging any video as unoptimised, run ffprobe to confirm source dimensions.** Do not apply the flag rules without the actual width — a video may look large by bandwidth alone but already have a width cap the URL does not show.
+
+```bash
+ffprobe -v quiet -print_format json -show_streams -probesize 500000 -analyzeduration 0 '[VIDEO_URL]'
+```
+
+**Write the raw ffprobe JSON output block to the trace file verbatim** — the full stream info output, not just the extracted dimensions. Do not summarise it into a single line like "1080×1920, H.264". The raw output must appear in the trace before any flag decision is written.
+
 - No width cap + bandwidth/view > 10MB → 🔴 unoptimised video
   - **Recommendation:** Add a width cap (`c-at_max,w-[width]`) to limit resolution. Confirm max display width with customer. If Phase 3 confirms significant mobile traffic, higher priority.
-  - To get source dimensions: `ffprobe -v quiet -print_format json -show_streams -probesize 500000 -analyzeduration 0 '[VIDEO_URL]'`
 - No width cap + bandwidth/view 500KB–10MB → ⚠️ large video without width cap
   - **Recommendation:** Add `c-at_max,w-[width]`. Confirm max display width with customer. If Phase 3 confirms significant mobile traffic, higher priority.
-  - To get source dimensions: `ffprobe -v quiet -print_format json -show_streams -probesize 500000 -analyzeduration 0 '[VIDEO_URL]'`
+
+**The 🔴 threshold for video is only > 10 MB/view.** Videos between 500 KB and 10 MB are ⚠️ — even at 3 MB, 5 MB, or 8 MB per view. Do not use 🔴 for videos unless bandwidth/view genuinely exceeds 10 MB. Examples: 1.6 MB/view = ⚠️. 3 MB/view = ⚠️. 8 MB/view = ⚠️. 12 MB/view = 🔴.
 - Hardcoded `f-mp4` or `f-mov` → blocks WebM delivery
   - **Recommendation:** Remove hardcoded format param. Account-level setting will handle WebM delivery. For native app URLs confirmed in Phase 3, explicitly force the format.
 - No format param → do not flag. Account setting or `f-auto` may be active.
@@ -353,7 +373,7 @@ From `topVideos.bandwidthWise`, for each video URL:
 **Step 5: Top Others**
 From `topOthers.bandwidthWise`, list the top non-image/video assets by bandwidth. Note any unexpectedly high-bandwidth assets (large PDFs, raw fonts, scripts) served through ImageKit.
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -429,7 +449,7 @@ Read `resultType.requestWise`: cache hit rate = Hit / (Hit + Miss).
      - **Recommendation:** If a custom short TTL is set, confirm it's intentional. Increasing it will improve hit rate for stable assets.
 - ≥ 80% → ✅ note it positively
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -448,10 +468,10 @@ Scan all IPs for any of these signals:
 
 If no IP crosses any threshold → note "No IPs above concentration threshold." Move on.
 
-If any IP crosses a threshold → look up each flagged IP:
+If any IP crosses a threshold → look up each flagged IP. **Do not write any IP classification without first running the ipinfo.io lookup. Classifying from general knowledge is not acceptable — run the curl command for every flagged IP before filling the table.**
 
 ```bash
-curl -s https://ipinfo.io/[IP_ADDRESS]
+curl -s --max-time 5 https://ipinfo.io/[IP_ADDRESS]
 ```
 
 Extract: `org`, `country`, `city`, `hostname`. Build a lookup table:
@@ -475,7 +495,7 @@ Extract: `org`, `country`, `city`, `hostname`. Build a lookup table:
 - IP avg bandwidth/request > 1MB → large asset downloads
   - **Recommendation:** Consistently downloading large assets — confirm if legitimate backend and whether transforms are applied.
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -497,7 +517,7 @@ This phase answers: **is VPU being consumed, are there spikes, and are there any
 - **Thumbnail check** — scan `topImages.bandwidthWise` URLs for `/ik-thumbnail.jpg`. Each unique thumbnail size = 30 VPU. If multiple sizes found, flag it.
   - **Recommendation:** Standardise on 2–3 thumbnail sizes maximum.
 
-Append findings to analysis file. Append trace entry.
+**Write to files now before proceeding:** Use the Edit tool to append these findings to the analysis file. Use the Edit tool to append the trace entry to the trace file. Do not start the next phase until both writes complete.
 
 ---
 
@@ -506,6 +526,8 @@ Append findings to analysis file. Append trace entry.
 The analysis file is already built incrementally. Now complete and finalise it.
 
 File: `data/output/[account]/[account]-[period]-analysis.md`
+
+**Use the exact section headings listed below. Do not use "Phase N" style headings in the analysis file — those belong in the trace file only.** Do not append `(Phase N)` or `— Phase N` to any heading. Example of what NOT to write: `## Transformation Analysis (Phase 5)`, `## Top IPs (Phase 6)`, `## VPU Consumption (Phase 7)`.
 
 Structure:
 
@@ -542,6 +564,29 @@ Structure:
 | ✅ Working Well    | Image / Video | finding | —                   | —               |
 | ⚠️ Needs Attention | Image / Video | finding | HIGH / MEDIUM / LOW | one-line action |
 
+These are the only 5 columns. Do not rename them. Do not add columns. Every finding from the analysis goes into this table as a row.
+
+---
+
+### Pre-Save Checklist — Output 1
+
+Before proceeding to OUTPUT 2, verify the analysis file contains all of the following. If any are missing, add them now.
+
+**1. Account Summary** — present as the first section after the header (and after any truncation warning). Covers: who the customer is, how they use ImageKit, storage architecture (⚠️ if inferred), primary market.
+
+**2. All required phase sections** — verify each of these exists in the file:
+- Traffic Overview
+- Image Format Delivery
+- Traffic Source Classification
+- Image & Video Resize, Transform Coverage & Top Assets
+- Video Format Delivery
+- Transformation Analysis — Cache & Coverage
+- VPU Consumption (even if VPU = 0 — write "No VPU consumed this period.")
+
+**3. Summary Table** — present as the last section. Every flagged finding from the analysis has a row. No finding is omitted.
+
+Only proceed to OUTPUT 2 after all 3 checks pass.
+
 ---
 
 ## OUTPUT 2 — Customer-Facing Monthly Report
@@ -551,6 +596,17 @@ Write `data/output/[account]/[account]-[period]-customer-report.md`.
 Tone: professional and clear. Written for a business stakeholder — not an engineer. No jargon, no JSON field names, no raw URLs. Name findings by product area ("your product images", "your hero banners") not by filename or URL.
 
 **No saving estimates in this file.** Those belong in OUTPUT 1 only.
+
+**This file has exactly 7 sections — no more, no fewer:**
+1. Header
+2. Monthly Summary
+3. How ImageKit Is Performing
+4. Highlights
+5. Images — Opportunities to Improve
+6. Video — Opportunities to Improve
+7. Questions for the Call
+
+Do not add any other sections. S3 errors, origin permission issues, infrastructure problems, 404 summaries, error logs — all of these stay in OUTPUT 1 only. If a finding does not fit into one of the 6 opportunity types, it either maps to an existing type or it does not appear in the customer report at all.
 
 ---
 
@@ -581,6 +637,7 @@ Scorecard — fixed 4-row table, same every report. Two columns: Image and Video
 - **Format conversion:** % of image requests served in WebP or AVIF. ✅ if WebP/AVIF dominant. ⚠️ if JPEG/PNG dominant.
 - **Compression:** mirrors format conversion — ✅ when format conversion ✅. Only ⚠️ if format conversion is failing.
 - **Resizing (Image):** transform adoption rate = transformed requests / total requests %. ⚠️ if below 30%. State the % — do NOT name specific assets in the scorecard.
+  - **Exception for URL rewriter accounts (Cloudinary/Akamai/Imgix):** the `transform.bandwidthWise` metric measures native `tr=` param usage only — it will read near-zero for these accounts because their transforms are embedded in the rewriter format, not `tr=` params. Do NOT quote this near-zero metric in the scorecard. Instead, write only what Phase 4 asset review confirmed: e.g. "⚠️ Resize gaps found in high-traffic images" or "✅ Top images confirmed resized". No raw %, no technical explanation of why the metric is misleading.
 - **Resizing (Video):** width cap present on top video assets? ✅ if top videos have a width cap applied. ⚠️ if top videos by bandwidth have no width cap.
 - **Cache hit rate (Image):** hit rate %. ✅ if ≥ 80%.
 - **Cache hit rate (Video):** same hit rate applies to both image and video — use the same status as the Image column and label it `[✅/⚠️] Shared`.
@@ -589,19 +646,43 @@ Video column is always shown even for low video traffic — ⚠️ rows open the
 
 **Scorecard = signal only. Causes and specific assets go in Opportunities below.**
 
+This table has **exactly 4 rows**. Do not add rows. Do not rename rows. If a capability has no data, still include the row — mark it `—`.
+
 ---
 
-**Highlights** (3 fixed bullet points, always in this order)
+**Highlights**
 
-1. % of image traffic served in WebP or AVIF (from formatWise)
-2. Average image size served = total image bandwidth ÷ total image requests (images only — exclude video, JS, CSS, fonts)
-3. Requests served from CDN without touching origin = cache hit rate × (Hit + Miss count from resultType)
+Exactly 3 bullets. Exactly this order. Exactly these topics. The section heading is "Highlights" — do not rename it, do not replace it with "What's Working" or any other heading.
+
+Write it using this template — fill in the bracketed values:
+
+```
+## Highlights
+
+- **[X]% of image traffic delivered as WebP or AVIF** — [one sentence on what this means for the account]
+- **Average image size: [X] KB** — [one sentence on whether this is in a good range]
+- **[X] million requests served from CDN without touching origin** — [one sentence on cache hit rate]
+```
+
+Calculations:
+- Bullet 1: `(image/webp requests + image/avif requests) ÷ total image requests` — sum both format entries from `formatWise`, divide by `request.total` image count. Use WebP alone only if AVIF = 0, in which case the sum still equals WebP. Never use WebP alone when AVIF > 0 — both must be combined.
+- Bullet 2: total image bandwidth ÷ total image requests — images only, exclude video, JS, CSS, fonts
+- Bullet 3: cache hit rate × (Hit + Miss count from resultType)
 
 ---
 
 **Images — Opportunities to Improve**
 
-Up to 4 opportunities, prioritised by impact. Only include opportunities from the fixed taxonomy below. Do not invent new types.
+Up to 4 opportunities, prioritised by impact.
+
+The 6 types in the taxonomy below are the **complete and exhaustive list** — these are the only headings that may appear in this section. If a finding does not match one of the 6 types exactly, map it to the closest one or drop it. Never create a new heading type.
+
+Common findings and where they map:
+- URL encoding bugs / double-encoding 404s → type 2 (CMS or URL issue)
+- SVG bandwidth anomaly → type 3 (high-traffic images without resize)
+- S3 / origin errors → do not include in the customer report at all — internal analysis file only
+- VPU cost / video processing → not in the fixed taxonomy — internal only, do not surface in customer report
+- AVIF not enabled → not an Opportunity — if AVIF is 0%, mention it briefly in Monthly Summary only ("AVIF is not yet enabled — enabling it would be the next step after WebP"). Do not create an Opportunity entry for it.
 
 Each opportunity block format:
 
@@ -646,6 +727,7 @@ Fixed opportunity taxonomy for video:
 5. **Video served in MP4 only — WebM not enabled**
    - Detection: Video format data shows MP4 only (no WebM in formatWise), significant video bandwidth
    - Fix: Enable account-level auto format conversion in ImageKit settings — no URL param needed for browser clients. If Phase 3 confirmed native app traffic, explicit format params are also needed: `f-webm` for Android, `f-mp4` for iOS.
+   - **Use this heading verbatim: "Video served in MP4 only — WebM not enabled".** Do not paraphrase. Common wrong variants that are NOT compliant: "WebM not being delivered", "WebM not available", "WebM not active".
 
 6. **Top videos served without a width cap**
    - Detection: Top video assets by bandwidth have no width transform applied AND bandwidth/view ≥ 500KB
@@ -655,7 +737,45 @@ Fixed opportunity taxonomy for video:
 
 **Questions for the Call**
 
-2–3 questions max. One sentence each — no preamble. Cover things that need customer input to confirm or investigate.
+**Maximum 3 questions.** One sentence each — no preamble. Cover only things where you cannot proceed without the customer's answer. If you have drafted more than 3, keep the ones that need customer input to act — cut the rest, they can come up organically on the call.
+
+---
+
+### Pre-Save Checklist — Output 2
+
+Before writing the customer report file, run these 6 checks in order. Fix any failure before saving.
+
+**1. Saving estimates** — search the drafted report for any of these: `×`, `% reduction`, `% smaller`, `GB saving`, `MB saving`, `saves approximately`, `would reduce`, `could save`. For every match, rewrite the sentence to describe what to change and why — remove the number entirely.
+
+**2. Taxonomy** — list every opportunity heading in the Opportunities sections. Each one must match one of these 6 exactly:
+- Native app traffic may not be receiving optimised formats
+- CMS or URL issue causing transforms to be ignored
+- High-traffic images served without resize transforms
+- Animated GIF not optimised
+- Video served in MP4 only — WebM not enabled
+- Top videos served without a width cap
+
+If any heading does not match, rename it to the closest type or remove the opportunity.
+
+**The heading must be the exact label text — no parentheticals, no account-specific additions, no extra words.** Account context goes in the body, not the heading.
+- ❌ "High-traffic images served without resize transforms (restaurant photos account for 280 GB)"
+- ✅ "High-traffic images served without resize transforms"
+
+**3. Raw filenames and paths** — search for any string that looks like a filename or file path: contains `/`, or contains a dot followed by a file extension (`.jpg`, `.jpeg`, `.png`, `.gif`, `.mp4`, `.svg`, `.webp`, `.webm`, `.pdf`, `.bmp`, `.lottie`, `.mov`, `.webp`, `.avif`, or any other file format suffix). Replace each occurrence with a plain description of what the asset is and where it appears in the product.
+- ❌ `consumer-react/assets/HomePage/Gif_loader.gif`
+- ✅ "the homepage loading animation"
+- ❌ `cms/product_variant/65a14739.bmp`
+- ✅ "the product variant image"
+
+**Also check for `/ik-gif-video.mp4`** — this is an ImageKit product endpoint, not a customer filename, but it still contains `/` and `.mp4` and will fail the check. Replace it with "ImageKit's built-in GIF-to-video conversion". Example: instead of "Append `/ik-gif-video.mp4` to the GIF URL", write "Use ImageKit's built-in GIF-to-video conversion".
+
+**4. Highlights** — quote the Highlights section back. Verify: heading says "Highlights", exactly 3 bullets, bullet 1 is WebP/AVIF %, bullet 2 is average image size, bullet 3 is CDN requests. If any of these are wrong, rewrite the section using the template above.
+
+**5. Scorecard** — count the rows in the "How ImageKit Is Performing" table. Must be exactly 4. If there are more, remove the extra rows.
+
+**6. Questions** — count the questions under "Questions for the Call". Must be 3 or fewer. If more, remove the weakest ones.
+
+Only write the file after all 6 checks pass.
 
 ---
 
@@ -663,6 +783,7 @@ Fixed opportunity taxonomy for video:
 
 ## RULES
 
+- Files are written phase by phase in real time — never batch all writes at the end of the run. If you find yourself about to write multiple phases at once, stop and write them one at a time.
 - All findings must come from the JSON data — no assumptions without stating the basis
 - Flag everything inferred with ⚠️ — confirm with the customer on the call
 - WebP ≠ AVIF — never treat them as the same setting
@@ -671,7 +792,7 @@ Fixed opportunity taxonomy for video:
 - Customer report: no technical jargon, no raw URLs, no JSON field names
 - Customer report: name findings by product area not by URL
 - Customer report: do not pad — only include real findings
-- Bandwidth saving estimates: WebP→AVIF 20–30%, MP4→WebM 20–30%, no resize→resize 40–60%, GIF→WebP 30–50%, native app f-webp 20–35%. Always flag as ⚠️. **Saving estimates go in OUTPUT 1 (technical analysis) only — never include saving estimates in OUTPUT 2 (customer report).**
+- Bandwidth saving estimates: WebP→AVIF 20–30%, MP4→WebM 20–30%, no resize→resize 40–60%, GIF→WebP 30–50%, native app f-webp 20–35%. Always flag as ⚠️. **Saving estimates go in OUTPUT 1 (technical analysis) only — never in OUTPUT 2.** In the customer report, describe what to change and why — never state how much it will save.
 - Inline recommendations: every flagged finding must have a **Recommendation:** line immediately after it
 - VPU is video-only — never reference in image findings
 - `tr=orig` on images = intentional original file request, do not flag. On videos = first-request intermediate response — note as a pre-warming opportunity, never as an error.
