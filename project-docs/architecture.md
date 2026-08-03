@@ -6,7 +6,7 @@ AGENTS.md               Cross-tool agent notes (Codex, other coding assistants)
 .claude/
   CLAUDE.md             Operating instructions for Claude Code
   rules/guardrails.md   Technical rules, UA classification patterns, flag thresholds, saving estimates
-  skills/                Analytics skills (preflight, analytics-run, quickcheck, compare, report-edit, clear-analytics-data)
+  skills/                Analytics skills (preflight, run, quickcheck, compare, report-edit, clear-analytics-data) + URL/domain/IP tools (url-check, ik-debug, transform-test, ip-lookup, origin-vendor, imagekit-cname-check, custom-domain-request)
 agent/
   prompt.md             Main analysis prompt — Claude reads this when running an analysis
   extract.py            Pre-processor — compresses raw JSON into a compact summary

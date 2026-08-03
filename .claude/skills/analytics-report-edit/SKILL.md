@@ -13,6 +13,9 @@ Resolve the report file per `.claude/skills/analytics-preflight/SKILL.md` (by ac
 - If a detailed analysis/trace file exists for this account, pull supporting data only from it; otherwise work from the report's own content.
 - **If the request is ambiguous** (e.g. "change the findings", "update the analysis") — ask whether they want a full re-run (new JSON) or just report edits. Do not touch anything until answered.
 
-## 3. Deliver
+## 3. Pre-save check
+Before writing the file, run the Output 2 pre-save checklist from `agent/prompt.md` on the edited report. Fix any failures before saving — edits must not break the report structure, taxonomy headings, highlights format, or introduce saving estimates.
+
+## 4. Deliver
 - Present the updated report inline inside a ```markdown block (copyable).
 - Save back to the same file and confirm the path.

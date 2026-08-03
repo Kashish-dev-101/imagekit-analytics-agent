@@ -26,17 +26,31 @@ For each customer, the agent creates three files:
 
 ## Skills
 
-Each of these can be invoked directly, independent of a full run:
+### Analytics (JSON-based)
+
+Each of these requires a customer JSON export in `data/input/`. `analytics-preflight` runs automatically before any of them — it resolves which file to use and routes to the right skill.
 
 | Skill | Use |
 |-------|-----|
 | `/analytics-run <hint>` | Full report — all 8 phases, 3 output files |
-| `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, device mix, cache. State only, no recommendations |
-| `/analytics-compare <hint>` | Month-over-month diff between two exports |
+| `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, top bandwidth assets, cache. State only, no recommendations |
+| `/analytics-compare <hint>` | Period-over-period diff — equal-duration exports, any date range. Factual, no external inference |
 | `/analytics-report-edit <hint>` | Safe edits to a finished customer report — no re-run |
-| `/clear-analytics-data` | Clears `data/input/` and `data/extracted/` for a fresh testing round. Never touches `data/output/`. |
+| `/clear-analytics-data` | Clears `data/input/` and `data/extracted/` for a fresh testing round. Never touches `data/output/` |
 
-`analytics-preflight` runs automatically before any of the above — it resolves which file in `data/input/` to use and routes to the right skill.
+### URL, domain, and IP tools
+
+These work on a URL, domain, or IP directly — no JSON needed, no preflight.
+
+| Skill | Use |
+|-------|-----|
+| `/url-check <url>` | Delivery vendor, format served, cache HIT/MISS, vary headers, and origin hosting — all from one curl |
+| `/ik-debug <url> [runs]` | Debug an ImageKit URL with `ik-debug=true` — latency, transformation time, ik-error. Default 3 runs |
+| `/transform-test <url>` | Interactively test transforms on an IK image URL — format, resize, server timing |
+| `/ip-lookup <ip> [ip2...]` | Look up IPs via ipinfo.io and classify — CDN, cloud, residential ISP, VPN/proxy, bot |
+| `/origin-vendor <domain>` | Resolve a domain to its hosting vendor via dig + ipinfo.io |
+| `/imagekit-cname-check <domain> [domain2...]` | Check if a domain is CNAME'd to ImageKit and which endpoint it points to |
+| `/custom-domain-request <domain> <clientNumber> [imagekitID]` | Check custom domain DNS state and produce the right message — internal activation request or customer DNS fix |
 
 ---
 
