@@ -38,4 +38,6 @@ Then call out anything notable:
 
 ## Example
 
+*(Placeholder domains and endpoint ID — substitute real values)*
+
 `media.brand-a.com` and `media.brand-b.com` both → `abc123xyz.imgkit.net` → both on ImageKit, same endpoint `abc123xyz` (one account fronting two brand domains).
