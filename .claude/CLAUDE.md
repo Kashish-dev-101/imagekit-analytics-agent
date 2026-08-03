@@ -72,7 +72,7 @@ data/                  Customer data — gitignored, stays local
   input/               Drop customer JSONs here
   extracted/           Generated compact summaries
   output/              Analysis outputs organised by account
-  reference-outputs/   Example analyses (Vax, Morphic, Popopo) — older single-file format
+  reference-outputs/   Example analyses — older single-file format
 setup/
   installation.md      One-time setup guide — Node.js, VS Code, Claude Code, Python
 archive/               Old prompt versions — gitignored
@@ -91,11 +91,11 @@ AGENTS.md              Cross-tool agent notes (Codex)
 
 | Type | Example |
 |------|---------|
-| Full analysis | `girnar-march-2026-analysis.md` |
-| Customer report | `girnar-march-2026-customer-report.md` |
-| Trace | `girnar-march-2026-trace.md` |
-| Quickcheck | `girnar-march-2026-quickcheck.md` |
-| Compare | `girnar-compare-feb-2026-vs-march-2026.md` |
+| Full analysis | `acme-march-2026-analysis.md` |
+| Customer report | `acme-march-2026-customer-report.md` |
+| Trace | `acme-march-2026-trace.md` |
+| Quickcheck | `acme-march-2026-quickcheck.md` |
+| Compare | `acme-compare-feb-2026-vs-march-2026.md` |
 
 ---
 

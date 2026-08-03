@@ -15,7 +15,7 @@ data/                   Runtime data — gitignored, except folder structure + i
   input/                Drop customer JSONs here
   extracted/            Generated compact summaries (produced by extract.py)
   output/               Analysis outputs — [account]/ holds the current review; older ones move to [account]/archive/[period]/
-  reference-outputs/    Example analyses — Vax, Morphic, Popopo (older single-file format)
+  reference-outputs/    Example analyses — older single-file format
 archive/                Old prompt versions, retired scripts — gitignored, except README.md
   test/                 Prompt-development test runs — customer-report-prompt-notes.md is active reference for prompt work, not disposable
 setup/

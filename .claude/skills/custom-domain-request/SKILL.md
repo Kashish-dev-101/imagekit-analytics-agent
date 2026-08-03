@@ -12,7 +12,7 @@ Checks whether a customer's custom domain is correctly pointed to ImageKit, then
 
 Expected: `<domain> <clientNumber> [imagekitID]`
 
-- **domain** — the customer's custom domain (e.g. `media.firstsource.com`)
+- **domain** — the customer's custom domain (e.g. `media.example.com`)
 - **clientNumber** — the ImageKit account identifier, used to build the admin panel link
 - **imagekitID** — optional. The `<id>` in `<id>.imgkit.net` that the domain should point to. Only needed as a fallback when DNS doesn't already show it. If DNS isn't correct and this wasn't provided, ask for it before drafting the customer message.
 

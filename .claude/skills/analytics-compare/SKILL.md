@@ -15,7 +15,7 @@ Label them:
 ## 2. Extract both (compare-specific folder)
 
 Derive the extracted filename from the input JSON filename:
-`swiggy-june-2026.json` → `data/extracted/compare/swiggy-june-2026-extracted.txt`
+`acme-june-2026.json` → `data/extracted/compare/acme-june-2026-extracted.txt`
 
 **All compare extracts go in `data/extracted/compare/` — never in `data/extracted/` directly.** That folder is the main agent's cache and must not be touched by this skill. Create `data/extracted/compare/` if it doesn't exist.
 

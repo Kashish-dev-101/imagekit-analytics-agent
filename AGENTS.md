@@ -112,9 +112,9 @@ Only save to `archive/test/` when the user has explicitly switched to Prompt Mai
 
 | Type | Example |
 |------|---------|
-| Full analysis | `girnar-march-2026-analysis.md` |
-| Trace | `girnar-march-2026-trace.md` |
-| Customer report | `girnar-march-2026-customer-report.md` |
+| Full analysis | `acme-march-2026-analysis.md` |
+| Trace | `acme-march-2026-trace.md` |
+| Customer report | `acme-march-2026-customer-report.md` |
 
 All outputs go to `data/output/`.
 Only use `archive/test/` for explicit Prompt Maintainer Mode test runs.

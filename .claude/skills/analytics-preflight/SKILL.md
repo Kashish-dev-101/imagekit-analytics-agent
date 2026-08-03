@@ -43,9 +43,9 @@ If both checks pass, continue to Step 1 without mentioning the check.
 
 ## 1. Resolve the input (auto-pick when clear, ask when not)
 
-- List the JSON files in `data/input/`. If the user gave a hint, filter to `data/input/*<hint>*.json` (case-insensitive — `kalki` matches `analyticsKalki.json`).
+- List the JSON files in `data/input/`. If the user gave a hint, filter to `data/input/*<hint>*.json` (case-insensitive — `acme` matches `analyticsAcme.json`).
 - **Single-file tasks** (run / quickcheck):
-  - **Unambiguous** (one match, or only one JSON present) → select it and state the choice + period read from the data: *"Running on `analyticsKalki.json`, April 1–27 — say stop if that's wrong."* Proceed unless the user objects.
+  - **Unambiguous** (one match, or only one JSON present) → select it and state the choice + period read from the data: *"Running on `analyticsAcme.json`, April 1–27 — say stop if that's wrong."* Proceed unless the user objects.
   - **Ambiguous** (several match, or several present with no narrowing hint) → list them and ask which.
 - **Compare** (two files): unambiguous = exactly two match, or only two JSONs present → use them, state both files + periods. Otherwise list and ask for the two.
 - **report-edit**: resolve the report by hint in `data/output/` (not a JSON); same auto-pick/ask.

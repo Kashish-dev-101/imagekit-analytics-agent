@@ -286,7 +286,7 @@ It can be: WAV audio files, unrecognised file types, misconfigured origins, bina
 3. For videos specifically, also check with `?tr=orig` to get the raw file's content-type from origin
 4. Only after checking actual URLs, state what the octet-stream traffic is coming from
 
-**Real example (LighthouseLearning, June 2026):** `application/octet-stream` was initially assumed to be video files. Actual check revealed it was `.wav` audio lesson files being served with wrong content-type — not videos at all. Videos returned `video/mp4` correctly, even with `?tr=orig`.
+**Real example (an e-learning platform):** `application/octet-stream` was initially assumed to be video files. Actual check revealed it was `.wav` audio lesson files being served with wrong content-type — not videos at all. Videos returned `video/mp4` correctly, even with `?tr=orig`.
 
 **Do not write:** *"The octet-stream traffic is likely video files…"* — that is an inference, not an observation. Flag it with ⚠️ and state it requires URL-level verification.
 
@@ -325,6 +325,6 @@ https://ik.imagekit.io/demo/img/video-no-extension_X9my06BI-/ik-video.mp4
 **What this means for analysis:**
 
 - If `topVideos` contains URLs whose path (ignoring query params) does not end in `.mp4`, `.mov`, `.webm`, or similar, check their bandwidth-per-view against otherwise-similar videos that do have a recognized extension. A large gap (5–10x avg size) is a strong signal these are being served unprocessed.
-- **Verified case (SlickApp, May→June 2026):** UGC video URLs without an extension averaged ~3.4–3.8 MB/view in *both* months — flat, confirming no processing was occurring. The same class of UGC video, once migrated to a `/ik-video.mp4` path, dropped to ~0.45 MB/view — a ~7.7x reduction, landing in the same size class as already-optimized named assets. This is a genuine, verifiable optimization event, not a traffic-composition artifact — confirm by checking whether avg size for the *unextended* group stays flat across the periods being compared (if it does, the group is a raw baseline, not something affected by other traffic-mix explanations).
+- **Verified case (a UGC video platform):** UGC video URLs without an extension averaged ~3.4–3.8 MB/view in *both* months — flat, confirming no processing was occurring. The same class of UGC video, once migrated to a `/ik-video.mp4` path, dropped to ~0.45 MB/view — a ~7.7x reduction, landing in the same size class as already-optimized named assets. This is a genuine, verifiable optimization event, not a traffic-composition artifact — confirm by checking whether avg size for the *unextended* group stays flat across the periods being compared (if it does, the group is a raw baseline, not something affected by other traffic-mix explanations).
 - Do not attribute a bandwidth-per-view drop solely to traffic composition shifts (e.g. device/app mix change) without first checking whether some of the traffic moved from an unextended to an extended URL pattern — this is a distinct, coexisting cause and both can be true at once.
 - If unextended UGC video URLs are still present in the most recent period, flag it as a live, unfinished optimization opportunity — quantify using the observed avg size gap.

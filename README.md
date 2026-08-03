@@ -67,7 +67,7 @@ First time? Follow **[setup/installation.md](./setup/installation.md)** to insta
 Drop the analytics JSON export from the ImageKit dashboard into `data/input/`:
 
 ```
-data/input/girnar.json
+data/input/acme.json
 ```
 
 ### 2. Open Claude Code in this project folder
@@ -82,12 +82,12 @@ claude
 Use the skill directly:
 
 ```
-/analytics-run girnar
+/analytics-run acme
 ```
 
 Or in plain language, optionally adding account context that should shape the findings or report tone:
 
-> "Run the analysis for Girnar — JSON is `data/input/girnar.json`, March 2026. This is a renewal call and they've been asking about bandwidth costs."
+> "Run the analysis for Acme — JSON is `data/input/acme.json`, March 2026."
 
 Claude resolves the file, runs the extractor, works through all 8 phases, and saves the three output files — nothing to confirm mid-run.
 
@@ -96,9 +96,9 @@ Claude resolves the file, runs the extractor, works through all 8 phases, and sa
 All three files land in `data/output/[account]/`:
 
 ```
-data/output/girnar/girnar-march-2026-analysis.md
-data/output/girnar/girnar-march-2026-trace.md
-data/output/girnar/girnar-march-2026-customer-report.md
+data/output/acme/acme-march-2026-analysis.md
+data/output/acme/acme-march-2026-trace.md
+data/output/acme/acme-march-2026-customer-report.md
 ```
 
 The **customer report** is what you bring to the call — it's also shown inline in the chat, copyable. The **analysis** and **trace** are reference — use them if you need to go deeper on a finding or verify a number.

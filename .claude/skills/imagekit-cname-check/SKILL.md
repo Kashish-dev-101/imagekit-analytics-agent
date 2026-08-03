@@ -14,7 +14,7 @@ ImageKit serves custom (vanity) domains via a CNAME to **`<endpoint-id>.imgkit.n
 
 ## Steps
 
-1. Take one or more domains from the user's message (e.g. `media.jbc.be`, `media.cks-fashion.be`).
+1. Take one or more domains from the user's message (e.g. `media.brand-a.com`, `media.brand-b.com`).
 2. For each domain, resolve the DNS answer/CNAME chain:
    ```bash
    dig +noall +answer <domain>
@@ -38,4 +38,4 @@ Then call out anything notable:
 
 ## Example
 
-`media.jbc.be` and `media.cks-fashion.be` both → `n6z3kgjf2.imgkit.net` → both on ImageKit, same endpoint `n6z3kgjf2` (one account fronting two brand domains).
+`media.brand-a.com` and `media.brand-b.com` both → `abc123xyz.imgkit.net` → both on ImageKit, same endpoint `abc123xyz` (one account fronting two brand domains).
