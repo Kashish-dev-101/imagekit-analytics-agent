@@ -19,6 +19,8 @@ The URL/domain/IP skills (`/url-check`, `/ik-debug`, `/origin-vendor`, etc.) use
 
 ## Step 1 — Install Node.js
 
+*Claude Code runs on Node.js — this needs to be installed before anything else.*
+
 Node.js must be installed before Claude Code. Check if you already have it:
 
 ```bash
@@ -52,11 +54,15 @@ Both commands should return a version number.
 
 ## Step 2 — Install VS Code
 
+*VS Code is the editor where Claude Code lives — you'll run the agent through a chat panel inside it.*
+
 Download and install from [code.visualstudio.com](https://code.visualstudio.com/).
 
 ---
 
 ## Step 3 — Install the Claude Code VS Code Extension
+
+*This adds the Claude Code chat panel to VS Code — it's where you'll type commands and see the analysis run.*
 
 Open VS Code → Extensions panel (⇧⌘X) → search **Claude Code** → Install.
 
@@ -65,6 +71,8 @@ Direct link: [marketplace.visualstudio.com/items?itemName=anthropic.claude-code]
 ---
 
 ## Step 4 — Install the Claude Code CLI
+
+*The CLI is what actually powers Claude Code under the hood. The VS Code extension and CLI work together.*
 
 ```bash
 npm install -g @anthropic-ai/claude-code
@@ -83,6 +91,8 @@ Run `claude` in your terminal — it will open a browser window to authenticate 
 ---
 
 ## Step 5 — Set up Python 3 and dependencies
+
+*Before analysis runs, the agent compresses the JSON into a compact format using a small Python script. This step installs what that script needs.*
 
 The data extractor (`agent/extract.py`) requires Python 3 and one library. Do both:
 
@@ -117,6 +127,8 @@ You should see `OK`. If you see an error, re-run `pip3 install -r requirements.t
 ---
 
 ## Step 6 — Clone the repo and open in VS Code
+
+*This downloads the project to your computer.*
 
 ```bash
 git clone https://github.com/Kashish-dev-101/imagekit-analytics-agent.git
