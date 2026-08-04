@@ -1,7 +1,9 @@
 ---
+
 name: custom-domain-request
 description: Check a customer's custom domain DNS and prepare the right message — internal request to activate it if DNS is already correct, or a customer-facing message if DNS isn't set up yet or is hidden behind a Cloudflare proxy. Usage — /custom-domain-request <domain> <clientNumber> [imagekitID]
 when_to_use: Setting up a custom (vanity) domain for a customer's ImageKit account — before asking internally to get it activated, or before asking the customer to fix their DNS.
+
 ---
 
 # /custom-domain-request — Custom Domain Setup Check

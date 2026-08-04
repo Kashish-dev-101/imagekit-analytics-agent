@@ -1,6 +1,7 @@
 ---
 name: analytics-preflight
 description: "PRE-STEP for any ImageKit analytics task — read before analytics-run, analytics-quickcheck, analytics-compare, or analytics-report-edit. Resolves which JSON in data/input/ to use and routes the request to the correct analytics skill. Covers file resolution, intent routing, and the full-vs-quick tie-breaker."
+when_to_use: Automatically loaded before any analytics skill run. Not invoked directly — used as a routing step before analytics-run, analytics-quickcheck, analytics-compare, or analytics-report-edit.
 ---
 
 # Analytics Preflight

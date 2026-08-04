@@ -1,4 +1,5 @@
 ---
+name: analytics-quickcheck
 description: Pre-call health check — reports the current state of the account across traffic, formats, transform coverage, top bandwidth assets, ABS, and cache. No flags, no recommendations. Numbers only — decision is on the reader.
 when_to_use: Before a customer call for a quick account snapshot, or to decide whether to run the full analysis with /analytics-run.
 ---

@@ -1,6 +1,7 @@
 ---
 name: clear-analytics-data
 description: "Clears data/input/ (customer JSON exports) and data/extracted/ (cached extractor output) to prepare a clean slate for a new round of testing. Never touches data/output/ — those are potential customer deliverables and are never deleted by this skill. Lists exactly what will be removed before removing it."
+when_to_use: When starting a fresh testing round and you want to clear customer JSON inputs and cached extracted files without touching the output folder.
 ---
 
 # Clear Analytics Data

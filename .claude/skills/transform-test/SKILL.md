@@ -1,5 +1,7 @@
 ---
+name: transform-test
 description: Interactively test ImageKit features on any image URL — compression, format, resize, transformations
+when_to_use: You want to verify how ImageKit is serving and transforming an image URL — format conversion, compression, resize, or server timing.
 ---
 
 Ask the user for a base image URL if not provided in $ARGUMENTS.

@@ -1,4 +1,5 @@
 ---
+name: analytics-report-edit
 description: Make safe edits to an existing customer analytics report — tone, wording, reprioritisation. Never re-runs the analysis and never touches source data. Use for post-run changes to a finished report.
 when_to_use: User wants to revise a finished analytics report, not re-run it.
 ---
