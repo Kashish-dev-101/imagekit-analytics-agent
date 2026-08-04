@@ -13,6 +13,8 @@ One-time setup. Once done, works across all Claude Code projects.
 
 No browser or MCP setup needed — this agent works entirely from files.
 
+The URL/domain/IP skills (`/url-check`, `/ik-debug`, `/origin-vendor`, etc.) use `curl` and `dig`, which ship with macOS. No extra install needed.
+
 ---
 
 ## Step 1 — Install Node.js

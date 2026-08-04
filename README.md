@@ -62,7 +62,7 @@ First time? Follow **[setup/installation.md](./setup/installation.md)** to insta
 
 ## How to Use
 
-> **Note:** `acme` is used throughout these examples as a placeholder for a customer account name. Replace it with the actual account name when running — e.g. if the account is Girnar, your file would be `data/input/girnar.json` and you'd run `/analytics-run girnar`.
+> **Note:** `acme` is used throughout these examples as a placeholder for a customer account name. Replace it with the actual account name when running — e.g. if the account is Acme, your file would be `data/input/acme.json` and you'd run `/analytics-run acme`.
 
 ### 1. Add the customer's JSON
 

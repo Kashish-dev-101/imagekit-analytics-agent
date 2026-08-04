@@ -1,4 +1,5 @@
 ---
+name: analytics-compare
 description: Compare two equal-duration periods of ImageKit analytics for the same account — requests, bandwidth, format mix, avg object size, daily spikes, transform coverage, and traffic source shift. Factual only — reports what the data shows, not external reasons.
 when_to_use: Two ImageKit analytics JSONs for the same account, any matching date range (day vs day, week vs week, month vs month).
 ---

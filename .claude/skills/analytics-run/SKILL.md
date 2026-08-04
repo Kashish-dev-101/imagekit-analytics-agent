@@ -1,4 +1,5 @@
 ---
+name: analytics-run
 description: Full ImageKit analytics analysis — all 8 phases, produces three files: internal technical analysis, reasoning trace, and customer-facing report. Use for monthly account reviews or when you need the complete picture with recommendations.
 when_to_use: Monthly analytics reviews, account review call prep, or when a quickcheck has flagged issues that need investigating. Produces 3 output files.
 ---

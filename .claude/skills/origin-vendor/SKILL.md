@@ -1,4 +1,5 @@
 ---
+name: origin-vendor
 description: Resolve a domain to its IP, look up ASN/org info, and identify the hosting/infrastructure vendor — usage: /origin-vendor <domain>
 when_to_use: You have a domain and want to know what hosting or CDN infrastructure is behind it — useful for understanding a customer's origin setup.
 ---
