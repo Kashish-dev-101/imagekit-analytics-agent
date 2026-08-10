@@ -25,6 +25,7 @@ The agent is driven by skills in `.claude/skills/`. **`analytics-preflight` runs
 | `/analytics-quickcheck <hint>` | Pre-call health check — traffic, formats, top bandwidth assets, cache, ABS. One MD, state only (no recommendations) |
 | `/analytics-compare <hint>` | Period-over-period diff — equal-duration exports, any date range. Factual state only, no external inference |
 | `/analytics-report-edit <hint>` | Safe edits to a customer report (no re-run) |
+| `/bot-traffic-check <hint>` | Tech-support investigation into suspected bot/scraper abuse — quantifies suspect IP ranges, detects disguised-UA traffic, checks geography/referrer, and applies the plan-tier-aware recommendation policy (robots.txt / customer-edge WAF / ImageKit Enterprise WAF / cloud abuse report). v1, not yet battle-tested beyond the case it was built from. |
 | `/ip-lookup <ip> [ip2 ip3...]` | Look up one or more IPs via ipinfo.io and classify each — CDN, cloud backend, residential ISP, VPN/proxy, bot |
 | `/url-check <url>` | Check what a URL is serving — delivery vendor, format, cache HIT/MISS, vary headers, and origin hosting (dig + ipinfo) |
 | `/ik-debug <url> [runs]` | Debug an ImageKit URL with `ik-debug=true` — latency, transformation time, ik-error, CloudFront PoP. Default 3 runs |

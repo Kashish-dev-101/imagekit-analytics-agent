@@ -63,6 +63,7 @@ If both checks pass, continue to Step 1 without mentioning the check.
 | compare, "vs", month-over-month, "what changed" (two periods) | `analytics-compare` |
 | "what's in this export", quick sanity check | `analytics-quickcheck` |
 | edit / reword / reprioritise a finished report | `analytics-report-edit` |
+| customer reports suspected bot/scraper abuse, "is this traffic real", unexplained bandwidth/request spike tied to abuse suspicion | `bot-traffic-check` |
 
 **Tie-breaker:** an unqualified "run the analysis" means the FULL run (`analytics-run`), never the trimmed `analytics-quickcheck`. If you genuinely cannot tell whether the user wants the full report or a quick pulse, ask — *"Full report or a quick pulse?"* — don't silently run the trimmed one. An explicit slash command always wins.
 

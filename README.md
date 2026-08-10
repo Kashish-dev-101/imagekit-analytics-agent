@@ -99,6 +99,16 @@ Don't need the full analysis? Run a fast pulse check instead:
 
 Returns key numbers only — traffic, formats, cache, top assets. No recommendations, just the state of the account.
 
+### Investigate suspected bot/scraper abuse
+
+A customer thinks bots or scrapers are driving their usage and wants to know if it's real, and what to do about it:
+
+```
+/bot-traffic-check acme
+```
+
+Checks suspect IP ranges, looks for traffic disguising itself as normal browser traffic, and recommends next steps based on their plan (robots.txt, blocking at their own edge, or ImageKit's Advanced WAF if they're on Enterprise). New skill — still being refined as it's used on more accounts.
+
 ### Compare two months
 
 ```
