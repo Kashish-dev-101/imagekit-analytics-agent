@@ -9,7 +9,7 @@ Given a customer's ImageKit analytics JSON export, the agent produces three outp
 
 1. **Full technical analysis** — traffic overview, format delivery, UA breakdown, geography, top assets, transformation analysis, cache & errors, optimization opportunities
 2. **Customer-facing report** — non-technical summary for account review calls
-3. **Internal trace** — reasoning log showing what was read, calculated, and why things were flagged
+3. **Internal trace** — evidence and calculation log showing what was read, calculated, and which rules support each finding
 
 Before analysis begins, the JSON is flattened into a compact text file by `agent/extract.py` — this reduces token usage and pre-sorts the data. The extracted file is cached in `data/extracted/` and reused on subsequent runs. See @agent/docs/extractor-reference.md for full details.
 

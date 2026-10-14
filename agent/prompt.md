@@ -37,7 +37,7 @@ If the user provided account context in their message — call purpose, known co
 
 Create three output files immediately using the Write tool before any analysis begins. Write to `data/output/[account]/` — create the folder if it doesn't exist:
 
-- `data/output/[account]/[account]-[period]-trace.md` — analysis trace (internal reasoning log)
+- `data/output/[account]/[account]-[period]-trace.md` — analysis trace (internal evidence and calculation log)
 - `data/output/[account]/[account]-[period]-analysis.md` — full technical analysis (internal)
 - `data/output/[account]/[account]-[period]-customer-report.md` — customer-facing monthly report
 
@@ -49,24 +49,24 @@ After every phase, use the Edit tool to append findings to the analysis file and
 
 ## TRACE FORMAT
 
-The trace file has two parts: a Reasoning Stream written once before Phase 0, and per-phase entries appended after each phase.
+The trace file has two parts: an Audit Summary initialised before Phase 0 and completed after Phase 7, and per-phase entries appended after each phase. Record observable evidence, calculations, and concise explanations of conclusions. Do not request or reproduce private internal thinking or a deliberation transcript.
 
-### Part 1 — Reasoning Stream (write once, before Phase 0)
+### Part 1 — Audit Summary (initialise before Phase 0, complete after Phase 7)
 
-**Use the Edit tool to write the Reasoning Stream to the trace file now. Do not call any tool for Phase 0 — no Read, no Bash, no Edit for analysis — until the trace write for the Reasoning Stream is confirmed complete.** The Reasoning Stream must be the first thing written to the trace file, not filled in retrospectively after the analysis is done.
+**Use the Edit tool to initialise the Audit Summary at the top of the trace file now, with the account, period, extracted data file path, and any supplied account context. Do not start Phase 0 until this write is confirmed complete.** Leave findings pending until the relevant phases are complete.
 
-Write a Reasoning Stream section at the top of the trace file. This is the actual thinking behind the analysis — not just decisions, but the process of reaching them. Write in plain prose, not bullet points.
+After Phase 7, complete this section with a concise evidence-based debrief for a colleague. Write in plain prose, not bullet points, using the recorded phase results.
 
 Cover:
 
-- What you noticed on first reading the data and what it immediately told you about the account
-- Hypotheses you formed and why you accepted or rejected them (e.g. "JPEG could be from hardcoded f-jpg, bot traffic, or native apps — I ruled out f-jpg because...")
-- How findings in one phase changed or reinforced what you were seeing in another
-- Anything unexpected or counterintuitive and how you resolved it
-- Things you considered flagging but decided not to, and why
-- What the transform sprawl, top assets, or IP patterns reveal about team structure or process, not just numbers
+- Main account findings, with supporting fields and values
+- Possible causes supported or excluded by specific evidence; label unconfirmed causes with ⚠️
+- Connections between phase results, citing the relevant measurements
+- Data inconsistencies, validation results, and unresolved limitations
+- Checks that produced no flag, with the measured value and applicable threshold or exclusion rule
+- Operational implications of transform sprawl, top assets, or IP patterns; label inferred team structure or process with ⚠️
 
-Think of it as the verbal debrief you'd give a colleague who wasn't in the room.
+Keep explanations focused on the evidence supporting the reported results.
 
 ### Part 2 — Per-Phase Entries (append after each phase)
 
@@ -84,12 +84,12 @@ After every phase, append to `[account]-[period]-trace.md` using this structure:
 - E.g. format_sum = 1,412M + 729M + ... = 3,580M → 83.9% of request.total
 
 ### Decision
-- [What was found and why it was flagged or not flagged]
+- [Finding and a brief explanation based on the recorded evidence]
 - [Which threshold was applied and what the value was]
 - [Any ambiguity or assumption — mark with ⚠️]
 ```
 
-The trace is never shared with the customer. Its purpose is to show what the agent looked at, how it calculated, and why it reached each conclusion.
+The trace is never shared with the customer. Its purpose is to document the data accessed, reproducible calculations, and evidence supporting each conclusion.
 
 ---
 
@@ -524,6 +524,8 @@ This phase answers: **is VPU being consumed, are there spikes, and are there any
 ## OUTPUT 1 — Full Technical Analysis
 
 The analysis file is already built incrementally. Now complete and finalise it.
+
+Complete the trace file's Audit Summary from the recorded Phase 0–7 results before finalising the outputs.
 
 File: `data/output/[account]/[account]-[period]-analysis.md`
 

@@ -51,7 +51,7 @@ After completing prompt-maintainer work:
 - Leave clear next steps if anything remains
 - Do not create new notes files unless the user explicitly asks for a separate workstream
 
-This file is the handoff doc between sessions and between agents for prompt iteration. It is different from the analysis trace files (which are per-run reasoning logs for customer outputs).
+This file is the handoff doc between sessions and between agents for prompt iteration. It is different from the analysis trace files (which are per-run evidence and calculation logs for customer outputs).
 
 ---
 
@@ -61,7 +61,7 @@ This project analyses ImageKit analytics JSON exports and produces three output 
 
 1. **Full technical analysis** — traffic, format delivery, UA breakdown, geography, top assets, transformations, cache, errors, optimisation opportunities
 2. **Customer-facing report** — non-technical summary for account review calls
-3. **Internal trace** — reasoning log showing what was read, calculated, and why things were flagged
+3. **Internal trace** — evidence and calculation log showing what was read, calculated, and which rules support each finding
 
 Core project files:
 - `prompt.md` — main analysis prompt, defines all phases
