@@ -1,6 +1,6 @@
 ---
 name: analytics-run
-description: Full ImageKit analytics analysis — all 8 phases, produces three files: internal technical analysis, reasoning trace, and customer-facing report. Use for monthly account reviews or when you need the complete picture with recommendations.
+description: Full ImageKit analytics analysis — all 8 phases, produces three files: internal technical analysis, evidence and calculation trace, and customer-facing report. Use for monthly account reviews or when you need the complete picture with recommendations.
 when_to_use: Monthly analytics reviews, account review call prep, or when a quickcheck has flagged issues that need investigating. Produces 3 output files.
 ---
 
@@ -10,7 +10,7 @@ when_to_use: Monthly analytics reviews, account review call prep, or when a quic
 
 Runs the complete 8-phase analysis as defined in `agent/prompt.md` and produces three output files:
 1. **Technical analysis** — full findings, every phase, all numbers, internal
-2. **Trace** — reasoning log showing what was read, how calculations were done, why things were flagged, internal
+2. **Trace** — evidence and calculation log showing what was read, reproducible calculations, and which rules support each finding, internal
 3. **Customer report** — non-technical summary for the account review call, customer-facing
 
 ---
